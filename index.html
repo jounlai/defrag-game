@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#080b0c" />
+    <meta
+      name="description"
+      content="散らばったデータが整っていく気持ちよさを、眺めて楽しむ架空のデフラグ体験。"
+    />
+    <title>BLOCKSHIFT — Defrag Visualizer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient--one" aria-hidden="true"></div>
+    <div class="ambient ambient--two" aria-hidden="true"></div>
+
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="BLOCKSHIFT ホーム">
+          <span class="brand__mark" aria-hidden="true">
+            <i></i><i></i><i></i><i></i>
+          </span>
+          <span>BLOCK<span>SHIFT</span></span>
+        </a>
+        <div class="topbar__meta">
+          <button class="icon-button" id="soundToggle" type="button" aria-label="サウンドをオンにする" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12.5 3a5.4 5.4 0 0 0-1.8-4v8a5.4 5.4 0 0 0 1.8-4Z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="デフラグシミュレーター">
+        <div class="disk-card panel">
+          <div class="panel__header">
+            <div class="drive-name">
+              <span class="drive-icon" aria-hidden="true"></span>
+              <div>
+                <span>CURRENT DATA FIELD</span>
+                <strong>FRAGMENT POOL <b>01</b></strong>
+              </div>
+            </div>
+            <div class="live-status" id="liveStatus"><i></i><span>READY TO SCAN</span></div>
+          </div>
+
+          <div class="disk-stage" id="diskStage">
+            <canvas id="diskCanvas" role="img" aria-label="断片化されたディスクブロックの視覚表示"></canvas>
+            <div class="scan-line" id="scanLine" aria-hidden="true"></div>
+            <div class="completion-stamp" id="completionStamp" aria-hidden="true">
+              <small>DATA FIELD</small><strong>GROUPED</strong><span>FOUR COLOR REGIONS ALIGNED</span>
+            </div>
+            <div class="canvas-hint" id="canvasHint">TAP A BLOCK TO INSPECT</div>
+          </div>
+
+          <div class="legend" aria-label="ブロックの凡例">
+            <span><i class="key key--blue"></i>BLUE</span>
+            <span><i class="key key--green"></i>GREEN</span>
+            <span><i class="key key--magenta"></i>MAGENTA</span>
+            <span><i class="key key--orange"></i>ORANGE</span>
+            <span><i class="key key--complete"></i>COMPLETED</span>
+            <span><i class="key key--moving"></i>CURRENT SELECTION</span>
+            <span><i class="key key--free"></i>FREE SPACE</span>
+          </div>
+        </div>
+
+        <aside class="metrics panel" aria-label="ドライブ情報">
+          <div class="panel__header metrics__header">
+            <span>FIELD ANALYTICS</span>
+            <span id="clock">00:00:00</span>
+          </div>
+
+          <div class="health-ring" id="healthRing" style="--health: 34">
+            <div>
+              <strong id="healthValue">34</strong><small>%</small>
+              <span>ORGANIZATION</span>
+            </div>
+          </div>
+
+          <div class="metric-list">
+            <div>
+              <span id="fragmentedLabel">LOOSE PIECES</span>
+              <strong id="fragmentedValue">--</strong>
+            </div>
+            <div>
+              <span>MERGE / MOVE</span>
+              <strong id="movedValue">0</strong>
+            </div>
+            <div>
+              <span>ELAPSED TIME</span>
+              <strong id="elapsedValue">00:00</strong>
+            </div>
+          </div>
+
+          <div class="capacity">
+            <div class="capacity__label">
+              <span>DATA DENSITY</span><b id="densityValue">--</b>
+            </div>
+            <div class="capacity__bar"><i></i></div>
+            <div class="capacity__foot"><span>OCCUPIED</span><span>AVAILABLE</span></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="control-deck panel">
+        <div class="progress-block">
+          <div class="progress-label">
+            <span id="phaseLabel">AWAITING COMMAND</span>
+            <strong id="progressValue">0.0%</strong>
+          </div>
+          <div class="progress-track"><i id="progressBar"></i></div>
+          <p id="operationText">The fragment field is ready. Begin when you are.</p>
+        </div>
+
+        <div class="controls">
+          <button class="primary-button" id="startButton" type="button">
+            <span class="button-icon" aria-hidden="true">▶</span>
+            <span class="button-copy"><small>START PROCESS</small><strong>CONSOLIDATE</strong></span>
+          </button>
+          <button class="secondary-button" id="resetButton" type="button">
+            <span aria-hidden="true">↻</span><span>RESHUFFLE</span>
+          </button>
+        </div>
+
+        <div class="deck-settings">
+          <div class="mode-control" aria-label="操作モード">
+            <span>CONTROL MODE</span>
+            <div>
+              <button type="button" data-mode="auto" class="is-active" aria-pressed="true">AUTO</button>
+              <button type="button" data-mode="manual" aria-pressed="false">MANUAL</button>
+            </div>
+          </div>
+          <div class="speed-control" aria-label="シミュレーション速度">
+            <span>TRANSFER RATE</span>
+            <div>
+              <button type="button" data-speed="0.5">0.5×</button>
+              <button type="button" data-speed="1" class="is-active">1×</button>
+              <button type="button" data-speed="4">4×</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p><i></i> NO ACTUAL FILES ARE BEING MOVED</p>
+        <p>SIMULATION BUILD 1.0.26</p>
+      </footer>
+    </main>
+
+    <div class="inspect-toast" id="inspectToast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>

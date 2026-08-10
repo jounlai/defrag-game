@@ -560,6 +560,16 @@
     return true;
   }
 
+  function checkManualCompletion(now = performance.now()) {
+    if (controlMode !== "manual" || state !== "running" || !isFieldOrganized()) return false;
+    phase = "group";
+    groupCursor = TARGET_CELLS;
+    manualSelection = -1;
+    selectedIndex = -1;
+    beginFinish(now);
+    return true;
+  }
+
   function advanceGroupCursor() {
     while (
       groupCursor < TARGET_CELLS &&
@@ -1111,6 +1121,7 @@
     canvas.focus({ preventScroll: true });
     if (controlMode === "manual" && state === "running") {
       manualCellClick(index);
+      checkManualCompletion();
     } else {
       inspectIndex(index);
     }
@@ -1127,6 +1138,7 @@
       event.preventDefault();
       if (controlMode === "manual" && state === "running") {
         manualCellClick(keyboardIndex);
+        checkManualCompletion();
         if (manualSelection >= 0) keyboardIndex = manualSelection;
       } else {
         inspectIndex(keyboardIndex);
@@ -1229,6 +1241,7 @@
   });
   modeToggle.addEventListener("click", () => {
     setControlMode(controlMode === "manual" ? "auto" : "manual");
+    checkManualCompletion();
   });
   canvas.addEventListener("click", handleCanvasPointer);
   canvas.addEventListener("keydown", handleCanvasKeydown);

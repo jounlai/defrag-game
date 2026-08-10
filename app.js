@@ -5,7 +5,6 @@
   const ctx = canvas.getContext("2d");
   const stage = document.querySelector("#diskStage");
   const controlDeck = document.querySelector(".control-deck");
-  const startButton = document.querySelector("#startButton");
   const resetButton = document.querySelector("#resetButton");
   const soundToggle = document.querySelector("#soundToggle");
   const liveStatus = document.querySelector("#liveStatus span");
@@ -25,7 +24,8 @@
   const densityValue = document.querySelector("#densityValue");
   const capacityBar = document.querySelector(".capacity__bar i");
   const speedButtons = [...document.querySelectorAll("[data-speed]")];
-  const modeButtons = [...document.querySelectorAll("[data-mode]")];
+  const modeToggle = document.querySelector("#modeToggle");
+  const cellSizeControl = document.querySelector("#cellSizeControl");
 
   const COLS = 48;
   const ROWS = 20;
@@ -44,7 +44,7 @@
 
   let cells = [];
   let state = "idle";
-  let controlMode = "auto";
+  let controlMode = "manual";
   let phase = "fill";
   let currentTarget = 0;
   let manualSelection = -1;
@@ -54,12 +54,17 @@
   let jumpCooldown = 0;
   let groupCursor = 0;
   let speed = 1;
+  let cellScale = 1;
   let actions = 0;
   let totalVolume = 0;
   let startedAt = 0;
   let elapsedBeforePause = 0;
   let lastStep = 0;
   let selectedIndex = -1;
+  let keyboardIndex = 0;
+  let keyboardActive = false;
+  let invalidIndex = -1;
+  let invalidUntil = 0;
   let transitions = [];
   let shockwaves = [];
   let audioContext = null;
@@ -121,12 +126,15 @@
     phase = "fill";
     currentTarget = 0;
     manualSelection = -1;
-    finalized = Array(TARGET_CELLS).fill(false);
+    finalized = Array(TOTAL).fill(false);
     completedCount = 0;
     sideRunRemaining = 0;
     jumpCooldown = 0;
     groupCursor = 0;
     selectedIndex = -1;
+    keyboardIndex = 0;
+    invalidIndex = -1;
+    invalidUntil = 0;
     transitions = [];
     shockwaves = [];
     startedAt = 0;
@@ -153,35 +161,29 @@
       return misplaced;
     }
     return dataIndices().filter((index) => {
-      if (index < TARGET_CELLS && finalized[index]) return false;
+      if (finalized[index]) return false;
       return cells[index].fill < 1 - EPSILON;
     }).length;
   }
 
   function isProtected(index) {
-    return index === currentTarget || (index < TARGET_CELLS && finalized[index]);
+    return index === currentTarget || finalized[index];
   }
 
   function setState(next) {
     state = next;
     stage.classList.toggle("is-scanning", next === "analyzing");
     if (next !== "complete") stage.classList.remove("is-complete");
-    startButton.disabled = next === "settling" || next === "complete";
-    const icon = startButton.querySelector(".button-icon");
-    const small = startButton.querySelector("small");
-    const strong = startButton.querySelector("strong");
 
     if (next === "idle") {
       fragmentedLabel.textContent = "LOOSE PIECES";
       liveStatus.textContent = "FIELD READY";
       phaseLabel.textContent = "AWAITING COMMAND";
       operationText.textContent = "The fragment field is ready. Begin when you are.";
-      icon.textContent = "▶"; small.textContent = "START PROCESS"; strong.textContent = "CONSOLIDATE";
     } else if (next === "analyzing") {
       liveStatus.textContent = "READING FRAGMENTS";
       phaseLabel.textContent = "MAPPING DATA DENSITY";
       operationText.textContent = "Measuring free capacity inside each fragment ...";
-      icon.textContent = "Ⅱ"; small.textContent = "PROCESS ACTIVE"; strong.textContent = "PAUSE";
     } else if (next === "running") {
       liveStatus.textContent = controlMode === "manual"
         ? "AWAITING CELL SELECTION"
@@ -196,45 +198,18 @@
           ? "Tap a source fragment, then tap the cell you want to fill."
           : "Tap two cells to swap their positions.";
       }
-      icon.textContent = "Ⅱ"; small.textContent = "PROCESS ACTIVE"; strong.textContent = "PAUSE";
     } else if (next === "paused") {
       liveStatus.textContent = "PROCESS PAUSED";
       phaseLabel.textContent = "CONSOLIDATION PAUSED";
       operationText.textContent = "The current fragment map has been preserved.";
-      icon.textContent = "▶"; small.textContent = "CONTINUE"; strong.textContent = "RESUME";
     } else if (next === "settling") {
       liveStatus.textContent = "VERIFYING FIELD";
       phaseLabel.textContent = "LOCKING DATA IN PLACE";
       operationText.textContent = "Checking the final data boundaries ...";
-      icon.textContent = "···"; small.textContent = "FINAL PASS"; strong.textContent = "SETTLING";
     } else if (next === "complete") {
       liveStatus.textContent = "COLOR FIELD GROUPED";
       phaseLabel.textContent = "FILL AND SWAP COMPLETE";
       operationText.textContent = "Every cell is full and all four color regions are aligned.";
-      icon.textContent = "✓"; small.textContent = "PROCESS DONE"; strong.textContent = "COMPLETE";
-    }
-  }
-
-  function startOrPause() {
-    if (state === "complete" || state === "settling") return;
-    if (state === "running" || state === "analyzing") {
-      elapsedBeforePause += performance.now() - startedAt;
-      setState("paused");
-      return;
-    }
-    startedAt = performance.now();
-    if (state === "idle") {
-      setState("analyzing");
-      beep(310, 0.05);
-      window.setTimeout(() => {
-        if (state === "analyzing") {
-          setState("running");
-          lastStep = performance.now();
-        }
-      }, 1500);
-    } else {
-      setState("running");
-      lastStep = performance.now();
     }
   }
 
@@ -320,7 +295,7 @@
 
     sources.forEach((sourceIndex) => {
       if (sourceIndex === index) return;
-      if (sourceIndex < TARGET_CELLS && finalized[sourceIndex]) return;
+      if (finalized[sourceIndex]) return;
       const source = cells[sourceIndex];
       if (colorId !== null && source.colorId !== colorId) return;
       const distance = manhattan(sourceIndex, index);
@@ -398,7 +373,7 @@
   }
 
   function consolidateStep(now, forcedSourceIndex = -1) {
-    if (currentTarget >= TARGET_CELLS) {
+    if (completedCount >= TARGET_CELLS) {
       beginGrouping(now);
       return;
     }
@@ -469,6 +444,12 @@
     phaseLabel.textContent = `FILLING CELL ${String(currentTarget + 1).padStart(3, "0")} / ${TARGET_CELLS}`;
     if (destination.fill >= 1 - EPSILON) {
       completeCurrentTarget(now);
+      if (controlMode === "manual" && remainderTo >= 0 && cells[remainderTo]) {
+        manualSelection = remainderTo;
+        selectedIndex = remainderTo;
+        phaseLabel.textContent = `REMAINDER ${String(remainderTo + 1).padStart(3, "0")} · SELECT NEXT TARGET`;
+        showToast(`REMAINDER ${(cells[remainderTo].fill * 100).toFixed(0)}% · SELECTED AS NEXT SOURCE`);
+      }
     } else if (controlMode === "manual") {
       manualSelection = currentTarget;
       selectedIndex = currentTarget;
@@ -532,17 +513,20 @@
     }
 
     const wanted = expectedColor(groupCursor);
-    const displaced = cells[groupCursor].colorId;
+    const displaced = cells[groupCursor]?.colorId ?? null;
     const candidates = [];
-    for (let index = groupCursor + 1; index < TARGET_CELLS; index++) {
-      if (cells[index].colorId === wanted) candidates.push(index);
+    for (let index = groupCursor + 1; index < TOTAL; index++) {
+      if (cells[index]?.colorId === wanted) candidates.push(index);
     }
     if (!candidates.length) {
       beginFinish(now);
       return;
     }
 
-    const perfectSwap = candidates.filter((index) => expectedColor(index) === displaced);
+    const perfectSwap = candidates.filter((index) => {
+      if (index >= TARGET_CELLS) return displaced === null;
+      return displaced !== null && expectedColor(index) === displaced;
+    });
     const sourceIndex = (perfectSwap.length ? perfectSwap : candidates)
       .sort((a, b) => manhattan(a, groupCursor) - manhattan(b, groupCursor))[0];
     const swapTarget = groupCursor;
@@ -571,14 +555,20 @@
     }
 
     if (manualSelection < 0) {
-      if (!cells[index] || (index < TARGET_CELLS && finalized[index])) {
-        showToast("SELECT AN UNLOCKED SOURCE CELL");
+      if (!cells[index]) {
+        rejectCell(index, "THIS CELL IS EMPTY · SELECT A DATA SOURCE");
         return;
       }
       manualSelection = index;
       selectedIndex = index;
-      showToast(`SOURCE ${String(index).padStart(3, "0")} SELECTED · CHOOSE ${COLOR_NAMES[cells[index].colorId]} TARGET`);
-      phaseLabel.textContent = `SOURCE ${String(index + 1).padStart(3, "0")} · SELECT TARGET`;
+      const completed = cells[index].fill >= 1 - EPSILON;
+      showToast(completed
+        ? `COMPLETED CELL ${String(index).padStart(3, "0")} · CHOOSE MOVE / SWAP DESTINATION`
+        : `SOURCE ${String(index).padStart(3, "0")} SELECTED · CHOOSE ${COLOR_NAMES[cells[index].colorId]} TARGET`
+      );
+      phaseLabel.textContent = completed
+        ? `COMPLETED ${String(index + 1).padStart(3, "0")} · SELECT DESTINATION`
+        : `SOURCE ${String(index + 1).padStart(3, "0")} · SELECT TARGET`;
       return;
     }
 
@@ -589,15 +579,19 @@
       showToast("SELECTION CANCELLED");
       return;
     }
-    if (index >= TARGET_CELLS || finalized[index]) {
-      showToast("SELECT A DIFFERENT, UNFINISHED TARGET CELL");
-      return;
-    }
     const sourceIndex = manualSelection;
     const source = cells[sourceIndex];
+    if (source.fill >= 1 - EPSILON) {
+      moveCompletedCell(sourceIndex, index);
+      return;
+    }
+    if (finalized[index]) {
+      rejectCell(index, "THIS CELL IS ALREADY COMPLETED");
+      return;
+    }
     const target = cells[index];
     if (target?.colorId !== null && target?.colorId !== undefined && target.colorId !== source.colorId) {
-      showToast(`COLOR MISMATCH · SELECT A ${COLOR_NAMES[source.colorId]} TARGET`);
+      rejectCell(index, `COLOR MISMATCH · SELECT A ${COLOR_NAMES[source.colorId]} TARGET`);
       return;
     }
     if (target?.fill >= 1 - EPSILON) {
@@ -612,11 +606,31 @@
     consolidateStep(performance.now(), sourceIndex);
   }
 
+  function moveCompletedCell(from, to) {
+    const fromWasFinalized = Boolean(finalized[from]);
+    const toWasFinalized = Boolean(finalized[to]);
+    const sourceColor = cells[from]?.colorId ?? 0;
+    [cells[from], cells[to]] = [cells[to], cells[from]];
+    finalized[from] = toWasFinalized;
+    finalized[to] = fromWasFinalized;
+    transitions.push({
+      kind: "swap", from, to, partner: to,
+      time: performance.now(), duration: 300, sourceColor
+    });
+    actions++;
+    manualSelection = -1;
+    selectedIndex = -1;
+    const firstOpen = finalized.findIndex((done) => !done);
+    currentTarget = firstOpen < 0 ? TARGET_CELLS : firstOpen;
+    operationText.textContent = cells[from]
+      ? `COMPLETED CELL ${String(from).padStart(3, "0")} ↔ ${String(to).padStart(3, "0")} SWAPPED`
+      : `COMPLETED CELL MOVED ${String(from).padStart(3, "0")} → ${String(to).padStart(3, "0")}`;
+    phaseLabel.textContent = "SELECT SOURCE, THEN TARGET";
+    updateStats();
+    beep(320, 0.03);
+  }
+
   function manualSwapClick(index) {
-    if (index >= TARGET_CELLS) {
-      showToast("SELECT A CELL INSIDE THE FILLED FIELD");
-      return;
-    }
     if (manualSelection < 0) {
       manualSelection = index;
       selectedIndex = index;
@@ -632,18 +646,18 @@
     }
 
     const first = manualSelection;
-    const firstColor = cells[first].colorId;
+    const firstColor = cells[first]?.colorId ?? null;
     [cells[first], cells[index]] = [cells[index], cells[first]];
     transitions.push({
       kind: "swap", from: index, to: first, partner: index,
-      time: performance.now(), duration: 300, sourceColor: cells[first].colorId
+      time: performance.now(), duration: 300, sourceColor: cells[first]?.colorId ?? 0
     });
     actions++;
     manualSelection = -1;
     selectedIndex = index;
     groupCursor = 0;
     advanceGroupCursor();
-    operationText.textContent = `MANUAL SWAP ${String(first).padStart(3, "0")} ↔ ${String(index).padStart(3, "0")} · ${COLOR_NAMES[firstColor]} exchanged`;
+    operationText.textContent = `MANUAL SWAP ${String(first).padStart(3, "0")} ↔ ${String(index).padStart(3, "0")} · ${firstColor === null ? "FREE SPACE" : COLOR_NAMES[firstColor]} exchanged`;
     phaseLabel.textContent = "SELECT TWO CELLS TO SWAP";
     updateStats();
     beep(300, 0.025);
@@ -655,26 +669,29 @@
     manualSelection = -1;
     selectedIndex = -1;
     controlDeck.classList.toggle("is-manual", nextMode === "manual");
-    modeButtons.forEach((button) => {
-      const active = button.dataset.mode === nextMode;
-      button.classList.toggle("is-active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
     if (phase === "fill") {
       const firstOpen = finalized.findIndex((done) => !done);
       currentTarget = firstOpen < 0 ? TARGET_CELLS : firstOpen;
     }
-    if (nextMode === "manual" && state !== "complete") {
+    if (state !== "complete" && state !== "settling") {
       if (state !== "running") startedAt = performance.now();
-      setState("running");
-    } else if (state === "running") {
       lastStep = performance.now();
       setState("running");
     } else {
-      operationText.textContent = nextMode === "manual"
-        ? "Manual mode ready. Select a source and target cell."
-        : "Automatic mode ready. The field will organize itself.";
+      operationText.textContent = "Reset the field to start again.";
     }
+    updateModeButtons();
+  }
+
+  function updateModeButtons() {
+    const isAuto = controlMode === "auto";
+    modeToggle.dataset.currentMode = controlMode;
+    modeToggle.classList.toggle("is-active", !isAuto);
+    modeToggle.setAttribute("aria-pressed", String(isAuto));
+    modeToggle.setAttribute(
+      "aria-label",
+      isAuto ? "自動モード。手動モードへ切り替え" : "手動モード。自動モードへ切り替え"
+    );
   }
 
   function recordAction() {
@@ -684,6 +701,7 @@
 
   function beginFinish(now) {
     setState("settling");
+    updateModeButtons();
     shockwaves.push({ row: -1, time: now + 120, duration: 1200 });
     window.setTimeout(() => {
       if (state === "settling") finish();
@@ -693,6 +711,7 @@
   function finish() {
     elapsedBeforePause += performance.now() - startedAt;
     setState("complete");
+    updateModeButtons();
     stage.classList.add("is-complete");
     completionStamp.classList.remove("is-visible");
     void completionStamp.offsetWidth;
@@ -723,25 +742,28 @@
   }
 
   function resizeCanvas() {
-    const rect = stage.getBoundingClientRect();
-    renderCols = rect.width <= 560 ? 24 : COLS;
+    const viewportWidth = stage.clientWidth;
+    const viewportHeight = stage.clientHeight;
+    const surfaceWidth = viewportWidth * cellScale;
+    const surfaceHeight = viewportHeight * cellScale;
+    renderCols = viewportWidth <= 560 ? 24 : COLS;
     renderRows = TOTAL / renderCols;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(rect.width * dpr);
-    canvas.height = Math.round(rect.height * dpr);
-    canvas.style.width = `${rect.width}px`;
-    canvas.style.height = `${rect.height}px`;
+    canvas.width = Math.round(surfaceWidth * dpr);
+    canvas.height = Math.round(surfaceHeight * dpr);
+    canvas.style.width = `${surfaceWidth}px`;
+    canvas.style.height = `${surfaceHeight}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const padding = rect.width < 550 ? 10 : 18;
-    const gap = rect.width < 550 ? 1.5 : 2;
+    const padding = (viewportWidth < 550 ? 10 : 18) * cellScale;
+    const gap = (viewportWidth < 550 ? 1.5 : 2) * cellScale;
     cell.gap = gap;
-    cell.width = (rect.width - padding * 2 - gap * (renderCols - 1)) / renderCols;
-    cell.height = Math.min(cell.width * 1.28, (rect.height - padding * 2 - gap * (renderRows - 1)) / renderRows);
+    cell.width = (surfaceWidth - padding * 2 - gap * (renderCols - 1)) / renderCols;
+    cell.height = Math.min(cell.width * 1.28, (surfaceHeight - padding * 2 - gap * (renderRows - 1)) / renderRows);
     const gridWidth = cell.width * renderCols + gap * (renderCols - 1);
     const gridHeight = cell.height * renderRows + gap * (renderRows - 1);
-    cell.ox = (rect.width - gridWidth) / 2;
-    cell.oy = (rect.height - gridHeight) / 2;
+    cell.ox = (surfaceWidth - gridWidth) / 2;
+    cell.oy = (surfaceHeight - gridHeight) / 2;
     draw();
   }
 
@@ -784,6 +806,8 @@
           drawActiveEdge(x, y, active, now, "source");
         }
         if (shouldDrawCursor(i)) drawTargetCursor(x, y, now);
+        if (i === invalidIndex && now < invalidUntil) drawInvalidCursor(x, y, now);
+        if (keyboardActive && i === keyboardIndex) drawKeyboardCursor(x, y, now);
         continue;
       }
 
@@ -794,6 +818,8 @@
         drawActiveEdge(x, y, active, now, role);
       }
       if (shouldDrawCursor(i)) drawTargetCursor(x, y, now);
+      if (i === invalidIndex && now < invalidUntil) drawInvalidCursor(x, y, now);
+      if (keyboardActive && i === keyboardIndex) drawKeyboardCursor(x, y, now);
       if (i === selectedIndex) {
         ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 1;
@@ -818,6 +844,29 @@
     ctx.shadowBlur = 8;
     ctx.lineWidth = 1;
     ctx.strokeRect(x - 2, y - 2, cell.width + 4, cell.height + 4);
+    ctx.restore();
+  }
+
+  function drawInvalidCursor(x, y, now) {
+    const remaining = Math.max(0, invalidUntil - now) / 520;
+    const shake = Math.sin(now / 18) * 2.5 * remaining;
+    ctx.save();
+    ctx.strokeStyle = "#ff5f57";
+    ctx.globalAlpha = .45 + remaining * .55;
+    ctx.shadowColor = "#ff5f57";
+    ctx.shadowBlur = 9;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x - 2 + shake, y - 2, cell.width + 4, cell.height + 4);
+    ctx.restore();
+  }
+
+  function drawKeyboardCursor(x, y, now) {
+    ctx.save();
+    ctx.strokeStyle = "#ffffff";
+    ctx.globalAlpha = .72 + Math.sin(now / 190) * .18;
+    ctx.lineWidth = 1.25;
+    ctx.setLineDash([3, 2]);
+    ctx.strokeRect(x - 3, y - 3, cell.width + 6, cell.height + 6);
     ctx.restore();
   }
 
@@ -961,11 +1010,54 @@
   function handleCanvasPointer(event) {
     const index = pointerIndex(event);
     if (index < 0) return;
+    keyboardIndex = index;
+    canvas.focus({ preventScroll: true });
     if (controlMode === "manual" && state === "running") {
       manualCellClick(index);
     } else {
       inspectIndex(index);
     }
+  }
+
+  function handleCanvasKeydown(event) {
+    const column = keyboardIndex % renderCols;
+    let nextIndex = keyboardIndex;
+    if (event.key === "ArrowLeft" && column > 0) nextIndex--;
+    else if (event.key === "ArrowRight" && column < renderCols - 1 && keyboardIndex < TOTAL - 1) nextIndex++;
+    else if (event.key === "ArrowUp" && keyboardIndex >= renderCols) nextIndex -= renderCols;
+    else if (event.key === "ArrowDown" && keyboardIndex + renderCols < TOTAL) nextIndex += renderCols;
+    else if (event.code === "Space" || event.key === "Enter") {
+      event.preventDefault();
+      if (controlMode === "manual" && state === "running") {
+        manualCellClick(keyboardIndex);
+        if (manualSelection >= 0) keyboardIndex = manualSelection;
+      } else {
+        inspectIndex(keyboardIndex);
+      }
+      return;
+    } else {
+      return;
+    }
+    event.preventDefault();
+    keyboardIndex = nextIndex;
+    scrollCellIntoView(keyboardIndex);
+  }
+
+  function scrollCellIntoView(index) {
+    if (cellScale <= 1) return;
+    const position = blockPosition(index);
+    const margin = Math.max(12, cell.width);
+    let left = stage.scrollLeft;
+    let top = stage.scrollTop;
+    if (position.x < left + margin) left = Math.max(0, position.x - margin);
+    else if (position.x + cell.width > left + stage.clientWidth - margin) {
+      left = position.x + cell.width - stage.clientWidth + margin;
+    }
+    if (position.y < top + margin) top = Math.max(0, position.y - margin);
+    else if (position.y + cell.height > top + stage.clientHeight - margin) {
+      top = position.y + cell.height - stage.clientHeight + margin;
+    }
+    stage.scrollTo({ left, top, behavior: "auto" });
   }
 
   function inspectIndex(index) {
@@ -980,11 +1072,21 @@
     beep(item ? 230 : 120, 0.025);
   }
 
-  function showToast(message) {
+  function rejectCell(index, message) {
+    invalidIndex = index;
+    invalidUntil = performance.now() + 520;
+    showToast(message, true);
+    beep(105, 0.035);
+  }
+
+  function showToast(message, isError = false) {
     inspectToast.textContent = message;
+    inspectToast.classList.toggle("is-error", isError);
     inspectToast.classList.add("is-visible");
     window.clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(() => inspectToast.classList.remove("is-visible"), 2300);
+    toastTimer = window.setTimeout(() => {
+      inspectToast.classList.remove("is-visible", "is-error");
+    }, 2300);
   }
 
   function beep(frequency, duration) {
@@ -1001,15 +1103,17 @@
     oscillator.stop(audioContext.currentTime + duration);
   }
 
-  startButton.addEventListener("click", startOrPause);
-  resetButton.addEventListener("click", () => {
+  function resetGame() {
     createField();
-    if (controlMode === "manual") {
-      startedAt = performance.now();
-      setState("running");
-    }
+    startedAt = performance.now();
+    lastStep = performance.now();
+    setState("running");
+    updateModeButtons();
+    stage.scrollTo({ left: 0, top: 0, behavior: "auto" });
     beep(190, 0.06);
-  });
+  }
+
+  resetButton.addEventListener("click", resetGame);
   soundToggle.addEventListener("click", () => {
     soundEnabled = !soundEnabled;
     soundToggle.setAttribute("aria-pressed", String(soundEnabled));
@@ -1023,10 +1127,19 @@
       beep(250 + speed * 12, 0.03);
     });
   });
-  modeButtons.forEach((button) => {
-    button.addEventListener("click", () => setControlMode(button.dataset.mode));
+  cellSizeControl.addEventListener("change", () => {
+    cellScale = Number(cellSizeControl.value);
+    resetGame();
+    resizeCanvas();
+    showToast(`CELL SIZE ${cellScale}× · GAME RESET`);
   });
-  canvas.addEventListener("pointerdown", handleCanvasPointer);
+  modeToggle.addEventListener("click", () => {
+    setControlMode(controlMode === "manual" ? "auto" : "manual");
+  });
+  canvas.addEventListener("click", handleCanvasPointer);
+  canvas.addEventListener("keydown", handleCanvasKeydown);
+  canvas.addEventListener("focus", () => { keyboardActive = true; });
+  canvas.addEventListener("blur", () => { keyboardActive = false; });
   new ResizeObserver(resizeCanvas).observe(stage);
 
   window.setInterval(() => {
@@ -1036,6 +1149,9 @@
   }, 1000);
 
   createField();
+  startedAt = performance.now();
+  lastStep = performance.now();
+  setControlMode("manual");
   resizeCanvas();
   requestAnimationFrame(tick);
 })();

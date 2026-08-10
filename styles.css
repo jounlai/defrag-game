@@ -89,9 +89,9 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
 .drive-name b { color: var(--acid); font-weight: 500; }
 .live-status { display: flex; gap: 9px; align-items: center; color: #a2afa9; font: 9px var(--mono); letter-spacing: .09em; }
 
-.disk-stage { position: relative; height: clamp(300px, 40vw, 485px); margin: 12px; overflow: hidden; background: #090d0e; border: 1px solid rgba(208, 243, 226, .08); cursor: crosshair; touch-action: manipulation; }
+.disk-stage { position: relative; height: clamp(300px, 40vw, 485px); margin: 12px; overflow: auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#3c4a43 #111715; background: #090d0e; border: 1px solid rgba(208, 243, 226, .08); cursor: crosshair; touch-action:auto; }
 .disk-stage::before { content:""; position: absolute; z-index: 2; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.015) 1px, transparent 1px); background-size: 24px 24px; pointer-events: none; }
-#diskCanvas { position: relative; z-index: 1; display: block; width: 100%; height: 100%; }
+#diskCanvas { position: relative; z-index: 1; display: block; width: 100%; height: 100%; outline:none; }
 .scan-line { position: absolute; z-index: 3; top: 0; bottom: 0; width: 2px; left: 0; background: var(--acid); box-shadow: 0 0 12px var(--acid), -20px 0 35px rgba(201,255,63,.23); opacity: 0; pointer-events: none; }
 .disk-stage.is-scanning .scan-line { opacity: .8; animation: scan 1.7s cubic-bezier(.3,0,.7,1) infinite; }
 @keyframes scan { from { left: 0; } to { left: 100%; } }
@@ -149,28 +149,14 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
 .progress-track i { display:block; height:100%; width:0; background:var(--acid); box-shadow:0 0 10px var(--acid); transition:width .25s ease; }
 .progress-block p { margin:0; color:#53605a; font:8px var(--mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .controls { display:flex; gap:8px; }
-.primary-button { min-width:184px; height:58px; padding: 0 20px; display:flex; align-items:center; gap:14px; color:#111510; background:var(--acid); border:0; cursor:pointer; box-shadow: 0 10px 30px rgba(201,255,63,.12); transition: transform .15s, background .15s; }
-.primary-button:hover { background:#d8ff73; transform:translateY(-1px); }
-.primary-button:active { transform:translateY(1px); }
-.primary-button:disabled { cursor:wait; opacity:.78; transform:none; }
-.button-icon { font-size:14px; }
-.button-copy { display:grid; text-align:left; gap:3px; }
-.button-copy small { font:7px var(--mono); letter-spacing:.1em; opacity:.6; }
-.button-copy strong { font:12px var(--mono); letter-spacing:.04em; }
 .secondary-button { width:58px; height:58px; padding:0; display:grid; place-items:center; background:transparent; border:1px solid var(--line-bright); cursor:pointer; }
 .secondary-button span:last-child { display:none; }
 .secondary-button:hover { border-color:#8a9a92; }
-.control-deck.is-manual .primary-button { display:none; }
-.control-deck.is-manual .controls { min-width:140px; }
-.control-deck.is-manual .secondary-button { width:100%; padding:0 14px; display:flex; align-items:center; justify-content:center; gap:9px; }
-.control-deck.is-manual .secondary-button span:last-child { display:inline; font:9px var(--mono); letter-spacing:.06em; }
-.control-deck.is-manual .speed-control { display:none; }
-.control-deck.is-manual .deck-settings { grid-template-columns:1fr; }
 .deck-settings { display:grid; grid-template-columns:1fr 1.25fr; gap:12px; }
 .speed-control > span, .mode-control > span { display:block; margin-bottom:10px; color:var(--muted); font:9px var(--mono); letter-spacing:.12em; }
 .speed-control > div, .mode-control > div { display:grid; border:1px solid var(--line); }
 .speed-control > div { grid-template-columns:repeat(3,1fr); }
-.mode-control > div { grid-template-columns:repeat(2,1fr); }
+.mode-control > div { grid-template-columns:1fr; }
 .speed-control button, .mode-control button { height:32px; background:transparent; border:0; border-right:1px solid var(--line); color:#66736d; font:9px var(--mono); cursor:pointer; }
 .speed-control button:last-child, .mode-control button:last-child { border:0; }
 .speed-control button.is-active, .mode-control button.is-active { color:var(--acid); background:rgba(201,255,63,.08); }
@@ -180,8 +166,9 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
 .footer p:first-child { display:flex; align-items:center; gap:7px; }
 .footer i { width:5px; height:5px; background:var(--mint); border-radius:50%; }
 
-.inspect-toast { position:fixed; z-index:20; left:50%; bottom:max(20px, env(safe-area-inset-bottom)); transform:translate(-50%, 20px); max-width:calc(100% - 32px); padding:10px 14px; color:#d8e5de; background:#161c1a; border:1px solid var(--line-bright); font:9px var(--mono); letter-spacing:.04em; opacity:0; pointer-events:none; transition:.2s ease; box-shadow:0 12px 40px rgba(0,0,0,.4); }
+.inspect-toast { position:fixed; z-index:60; left:50%; bottom:max(20px, env(safe-area-inset-bottom)); transform:translate(-50%, 20px); max-width:calc(100% - 32px); padding:10px 14px; color:#d8e5de; background:#161c1a; border:1px solid var(--line-bright); font:9px var(--mono); letter-spacing:.04em; opacity:0; pointer-events:none; transition:.2s ease; box-shadow:0 12px 40px rgba(0,0,0,.4); }
 .inspect-toast.is-visible { opacity:1; transform:translate(-50%, 0); }
+.inspect-toast.is-error { color:#ffd7d2; border-color:rgba(255,95,87,.72); background:#211614; }
 
 @media (max-width: 900px) {
   .app-shell { width:min(100% - 24px, 720px); padding-top:16px; }
@@ -235,12 +222,72 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
   }
   .progress-block { display:none; }
   .controls { order:0; }
-  .primary-button { flex:1; justify-content:center; min-width:0; }
   .secondary-button { width:58px; flex:0 0 auto; }
   .deck-settings { display:grid; grid-template-columns:1fr 1.3fr; gap:8px; }
   .speed-control, .mode-control { min-width:0; }
   .workspace, .disk-card, .metrics, .control-deck, .progress-block { min-width:0; max-width:100%; }
   .footer p:last-child { display:none; }
+  .inspect-toast { bottom:max(154px, calc(138px + env(safe-area-inset-bottom))); width:max-content; }
+}
+
+/* Minimal game-first layout */
+.topbar,
+.disk-card > .panel__header,
+.metrics,
+.footer,
+.canvas-hint,
+.progress-block {
+  display:none;
+}
+
+.app-shell { padding-top:8px; }
+.workspace { display:block; margin-top:0; }
+.disk-card { background:transparent; border:0; box-shadow:none; backdrop-filter:none; }
+.disk-stage { margin:0; width:100%; height:min(72svh, 680px); border-color:rgba(208,243,226,.14); }
+.control-deck {
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:48px;
+  padding:7px 8px;
+  margin-top:8px;
+}
+.controls { flex:0 0 auto; min-width:0; }
+.secondary-button,
+.control-deck.is-manual .secondary-button { width:32px; height:32px; padding:0; display:grid; place-items:center; }
+.secondary-button span:last-child,
+.control-deck.is-manual .secondary-button span:last-child { display:none; }
+.deck-settings,
+.control-deck.is-manual .deck-settings { display:flex; align-items:center; gap:6px; }
+.speed-control,
+.control-deck.is-manual .speed-control { display:block; }
+.speed-control > span,
+.mode-control > span { display:none; }
+.speed-control > div,
+.mode-control > div { display:flex; }
+.speed-control button,
+.mode-control button { height:32px; padding:0 7px; min-width:0; font-size:8px; }
+.mode-control button { width:38px; }
+.mode-icon { width:14px; height:14px; margin:auto; fill:currentColor; }
+.mode-icon--pause { display:none; }
+#modeToggle[data-current-mode="auto"] .mode-icon--play { display:none; }
+#modeToggle[data-current-mode="auto"] .mode-icon--pause { display:block; }
+.speed-control button { width:38px; }
+.cell-size-control { width:58px; height:32px; display:flex; align-items:center; }
+.cell-size-control input { width:58px; margin:0; accent-color:var(--acid); cursor:pointer; }
+
+@media (min-width: 561px) {
+  .control-deck {
+    justify-content:center;
+  }
+}
+
+@media (max-width: 560px) {
+  .app-shell { padding-bottom:0; }
+  .disk-stage { width:100%; height:clamp(320px, calc(100svh - 64px), 680px); min-height:0; max-height:none; margin:0; }
+  .inspect-toast { bottom:max(68px, calc(56px + env(safe-area-inset-bottom))); }
 }
 
 @media (prefers-reduced-motion: reduce) {

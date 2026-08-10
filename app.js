@@ -21,18 +21,25 @@
   const inspectToast = document.querySelector("#inspectToast");
   const clock = document.querySelector("#clock");
   const completionStamp = document.querySelector("#completionStamp");
+  const playAgainButton = document.querySelector("#playAgainButton");
   const densityValue = document.querySelector("#densityValue");
   const capacityBar = document.querySelector(".capacity__bar i");
   const speedButtons = [...document.querySelectorAll("[data-speed]")];
   const modeToggle = document.querySelector("#modeToggle");
   const cellSizeControl = document.querySelector("#cellSizeControl");
 
-  const COLS = 48;
-  const ROWS = 20;
-  const TOTAL = COLS * ROWS;
-  const TARGET_CELLS = 520;
+  const DESKTOP_COLS = 48;
+  const DESKTOP_ROWS = 20;
+  const MOBILE_COLS = 24;
+  const MOBILE_ROWS = 40;
+  const BASE_DENSITY = 520 / (DESKTOP_COLS * DESKTOP_ROWS);
   const COLOR_COUNT = 4;
-  const CELLS_PER_COLOR = TARGET_CELLS / COLOR_COUNT;
+  let COLS = DESKTOP_COLS;
+  let ROWS = DESKTOP_ROWS;
+  let TOTAL = COLS * ROWS;
+  let TARGET_CELLS = 520;
+  let COLOR_ROWS = [3, 3, 3, 2];
+  let groupOrder = [0, 1, 2, 3];
   const EPSILON = 0.00001;
   const FIT_EPSILON = 0.0005;
   const DATA_SHADES = ["#3296ff", "#54df65", "#d85cff", "#ff9738"];
@@ -74,6 +81,28 @@
   let renderCols = COLS;
   let renderRows = ROWS;
 
+  function configureGrid() {
+    const compact = stage.clientWidth <= 560;
+    const baseCols = compact ? MOBILE_COLS : DESKTOP_COLS;
+    const baseRows = compact ? MOBILE_ROWS : DESKTOP_ROWS;
+    const nextCols = Math.max(4, Math.ceil(baseCols / cellScale));
+    const nextRows = Math.max(4, Math.ceil(baseRows / cellScale));
+
+    COLS = nextCols;
+    ROWS = nextRows;
+    TOTAL = COLS * ROWS;
+    const targetRows = Math.max(COLOR_COUNT, Math.min(
+      ROWS,
+      Math.round(ROWS * BASE_DENSITY)
+    ));
+    const rowsPerColor = Math.floor(targetRows / COLOR_COUNT);
+    COLOR_ROWS = Array(COLOR_COUNT).fill(rowsPerColor);
+    for (let index = 0; index < targetRows % COLOR_COUNT; index++) COLOR_ROWS[index]++;
+    TARGET_CELLS = targetRows * COLS;
+    renderCols = COLS;
+    renderRows = ROWS;
+  }
+
   const shuffle = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -95,7 +124,7 @@
     const fragments = [];
     let fileId = 0;
     for (let colorId = 0; colorId < COLOR_COUNT; colorId++) {
-      let colorVolume = CELLS_PER_COLOR;
+      let colorVolume = COLOR_ROWS[colorId] * COLS;
       while (colorVolume > EPSILON) {
         let fileVolume = Math.min(colorVolume, 12 + Math.floor(Math.random() * 13));
         colorVolume -= fileVolume;
@@ -131,6 +160,7 @@
     sideRunRemaining = 0;
     jumpCooldown = 0;
     groupCursor = 0;
+    groupOrder = Array.from({ length: COLOR_COUNT }, (_, index) => index);
     selectedIndex = -1;
     keyboardIndex = 0;
     invalidIndex = -1;
@@ -139,6 +169,9 @@
     shockwaves = [];
     startedAt = 0;
     elapsedBeforePause = 0;
+    completionStamp.classList.remove("is-visible");
+    completionStamp.setAttribute("aria-hidden", "true");
+    playAgainButton.disabled = true;
     setState("idle");
     updateStats();
     draw();
@@ -192,7 +225,7 @@
         ? (phase === "fill" ? "SELECT SOURCE, THEN TARGET" : "SELECT TWO CELLS TO SWAP")
         : (phase === "fill"
           ? `CONSOLIDATING CELL ${String(currentTarget + 1).padStart(3, "0")}`
-          : `GROUPING ${COLOR_NAMES[Math.min(3, Math.floor(groupCursor / CELLS_PER_COLOR))]}`);
+          : `GROUPING ${COLOR_NAMES[expectedColor(Math.min(groupCursor, TARGET_CELLS - 1))]}`);
       if (controlMode === "manual") {
         operationText.textContent = phase === "fill"
           ? "Tap a source fragment, then tap the cell you want to fill."
@@ -484,7 +517,47 @@
   }
 
   function expectedColor(index) {
-    return Math.min(COLOR_COUNT - 1, Math.floor(index / CELLS_PER_COLOR));
+    const row = Math.floor(index / COLS);
+    let boundary = 0;
+    for (const colorId of groupOrder) {
+      boundary += COLOR_ROWS[colorId];
+      if (row < boundary) return colorId;
+    }
+    return groupOrder[groupOrder.length - 1];
+  }
+
+  function establishGroupOrder() {
+    groupOrder = Array.from({ length: COLOR_COUNT }, (_, colorId) => colorId)
+      .sort((a, b) => {
+        const firstA = cells.findIndex((item) => item?.colorId === a);
+        const firstB = cells.findIndex((item) => item?.colorId === b);
+        return firstA - firstB;
+      });
+  }
+
+  function isFieldOrganized() {
+    if (TARGET_CELLS % COLS !== 0) return false;
+
+    const seenColors = new Set();
+    let previousColor = null;
+    for (let rowStart = 0; rowStart < TARGET_CELLS; rowStart += COLS) {
+      const rowColor = cells[rowStart]?.colorId;
+      if (rowColor === null || rowColor === undefined) return false;
+      for (let index = rowStart; index < rowStart + COLS; index++) {
+        const item = cells[index];
+        if (!item || item.fill < 1 - EPSILON || item.colorId !== rowColor) return false;
+      }
+      if (rowColor !== previousColor) {
+        if (seenColors.has(rowColor)) return false;
+        seenColors.add(rowColor);
+        previousColor = rowColor;
+      }
+    }
+
+    for (let index = TARGET_CELLS; index < TOTAL; index++) {
+      if (cells[index]?.fill > EPSILON) return false;
+    }
+    return true;
   }
 
   function advanceGroupCursor() {
@@ -497,8 +570,13 @@
   function beginGrouping(now) {
     phase = "group";
     fragmentedLabel.textContent = "MISPLACED COLORS";
+    establishGroupOrder();
     groupCursor = 0;
     advanceGroupCursor();
+    if (isFieldOrganized()) {
+      beginFinish(now);
+      return;
+    }
     setState("running");
     operationText.textContent = "All cells reached 100%. Beginning color SWAP pass ...";
     shockwaves.push({ row: -2, time: now, duration: 850 });
@@ -541,7 +619,7 @@
     phaseLabel.textContent = groupCursor < TARGET_CELLS
       ? `GROUPING ${COLOR_NAMES[expectedColor(groupCursor)]} · CELL ${String(groupCursor + 1).padStart(3, "0")}`
       : "VERIFYING FOUR COLOR REGIONS";
-    if (groupCursor % CELLS_PER_COLOR === 0) {
+    if (groupCursor % COLS === 0) {
       shockwaves.push({ row: Math.floor((groupCursor - 1) / renderCols), time: now + 80, duration: 520 });
       beep(350 + expectedColor(Math.max(0, groupCursor - 1)) * 75, 0.04);
     }
@@ -661,7 +739,7 @@
     phaseLabel.textContent = "SELECT TWO CELLS TO SWAP";
     updateStats();
     beep(300, 0.025);
-    if (groupCursor >= TARGET_CELLS) beginFinish(performance.now());
+    if (isFieldOrganized()) beginFinish(performance.now());
   }
 
   function setControlMode(nextMode) {
@@ -700,6 +778,10 @@
   }
 
   function beginFinish(now) {
+    if (!isFieldOrganized()) {
+      if (phase === "fill") beginGrouping(now);
+      return;
+    }
     setState("settling");
     updateModeButtons();
     shockwaves.push({ row: -1, time: now + 120, duration: 1200 });
@@ -710,12 +792,18 @@
 
   function finish() {
     elapsedBeforePause += performance.now() - startedAt;
+    controlMode = "manual";
+    manualSelection = -1;
+    selectedIndex = -1;
+    controlDeck.classList.add("is-manual");
     setState("complete");
     updateModeButtons();
     stage.classList.add("is-complete");
     completionStamp.classList.remove("is-visible");
     void completionStamp.offsetWidth;
     completionStamp.classList.add("is-visible");
+    completionStamp.setAttribute("aria-hidden", "false");
+    playAgainButton.disabled = false;
     updateStats(true);
     beep(470, 0.07);
     window.setTimeout(() => beep(620, 0.09), 100);
@@ -744,10 +832,19 @@
   function resizeCanvas() {
     const viewportWidth = stage.clientWidth;
     const viewportHeight = stage.clientHeight;
-    const surfaceWidth = viewportWidth * cellScale;
-    const surfaceHeight = viewportHeight * cellScale;
-    renderCols = viewportWidth <= 560 ? 24 : COLS;
-    renderRows = TOTAL / renderCols;
+    const previousCols = COLS;
+    const previousRows = ROWS;
+    configureGrid();
+    if (cells.length && (previousCols !== COLS || previousRows !== ROWS)) {
+      createField();
+      startedAt = performance.now();
+      lastStep = performance.now();
+      setState("running");
+      updateModeButtons();
+    }
+
+    const surfaceWidth = viewportWidth;
+    const surfaceHeight = viewportHeight;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.round(surfaceWidth * dpr);
     canvas.height = Math.round(surfaceHeight * dpr);
@@ -755,8 +852,8 @@
     canvas.style.height = `${surfaceHeight}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const padding = (viewportWidth < 550 ? 10 : 18) * cellScale;
-    const gap = (viewportWidth < 550 ? 1.5 : 2) * cellScale;
+    const padding = viewportWidth < 550 ? 10 : 18;
+    const gap = viewportWidth < 550 ? 1.5 : 2;
     cell.gap = gap;
     cell.width = (surfaceWidth - padding * 2 - gap * (renderCols - 1)) / renderCols;
     cell.height = Math.min(cell.width * 1.28, (surfaceHeight - padding * 2 - gap * (renderRows - 1)) / renderRows);
@@ -1044,20 +1141,7 @@
   }
 
   function scrollCellIntoView(index) {
-    if (cellScale <= 1) return;
-    const position = blockPosition(index);
-    const margin = Math.max(12, cell.width);
-    let left = stage.scrollLeft;
-    let top = stage.scrollTop;
-    if (position.x < left + margin) left = Math.max(0, position.x - margin);
-    else if (position.x + cell.width > left + stage.clientWidth - margin) {
-      left = position.x + cell.width - stage.clientWidth + margin;
-    }
-    if (position.y < top + margin) top = Math.max(0, position.y - margin);
-    else if (position.y + cell.height > top + stage.clientHeight - margin) {
-      top = position.y + cell.height - stage.clientHeight + margin;
-    }
-    stage.scrollTo({ left, top, behavior: "auto" });
+    // The entire grid always fits inside the stage; keyboard navigation never scrolls it.
   }
 
   function inspectIndex(index) {
@@ -1114,6 +1198,7 @@
   }
 
   resetButton.addEventListener("click", resetGame);
+  playAgainButton.addEventListener("click", resetGame);
   soundToggle.addEventListener("click", () => {
     soundEnabled = !soundEnabled;
     soundToggle.setAttribute("aria-pressed", String(soundEnabled));
@@ -1128,10 +1213,19 @@
     });
   });
   cellSizeControl.addEventListener("change", () => {
-    cellScale = Number(cellSizeControl.value);
+    const nextCellScale = Number(cellSizeControl.value);
+    if (nextCellScale === cellScale) return;
+    const confirmed = window.confirm("マスのサイズを変更すると、現在のゲームはリセットされます。変更してもよろしいですか？");
+    if (!confirmed) {
+      cellSizeControl.value = String(cellScale);
+      return;
+    }
+    cellScale = nextCellScale;
+    configureGrid();
     resetGame();
     resizeCanvas();
-    showToast(`CELL SIZE ${cellScale}× · GAME RESET`);
+    const sizeName = ["SMALL", "MEDIUM", "LARGE"][cellScale - 1];
+    showToast(`CELL SIZE ${sizeName} · ${TOTAL} BLOCKS · GAME RESET`);
   });
   modeToggle.addEventListener("click", () => {
     setControlMode(controlMode === "manual" ? "auto" : "manual");
@@ -1148,6 +1242,7 @@
     }).format(new Date());
   }, 1000);
 
+  configureGrid();
   createField();
   startedAt = performance.now();
   lastStep = performance.now();

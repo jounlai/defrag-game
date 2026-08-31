@@ -1,147 +1,306 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#080b0c" />
     <meta
       name="description"
-      content="散らばったデータが整っていく気持ちよさを、眺めて楽しむ架空のデフラグ体験。"
+      content="Merge scattered data, fill every cell, sort the colors into bands. A fictional defrag you can play or just watch."
     />
-    <title>BLOCKSHIFT — Defrag Visualizer</title>
+    <title>DEFRAG</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <svg class="logo-sprite" aria-hidden="true" focusable="false"><defs>
+    <symbol id="logoMark" viewBox="-1.4 -1.4 24.4 24.4">
+      <rect x="-1.4" y="-1.4" width="24.4" height="24.4" fill="#212b27"/>
+      <g shape-rendering="crispEdges" stroke="#0d1512" stroke-width="0.9"><rect x="0.00" y="0.00" width="5.0" height="5.0" fill="#ff9738"/><rect x="0.70" y="0.70" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="5.60" y="0.00" width="5.0" height="5.0" fill="#ff9738"/><rect x="6.30" y="0.70" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="11.20" y="0.00" width="5.0" height="5.0" fill="#ff9738"/><rect x="11.90" y="0.70" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="16.80" y="0.00" width="5.0" height="5.0" fill="#ff9738"/><rect x="17.50" y="0.70" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="0.00" y="5.60" width="5.0" height="5.0" fill="#d85cff"/><rect x="0.70" y="6.30" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="5.60" y="5.60" width="5.0" height="5.0" fill="#d85cff"/><rect x="6.30" y="6.30" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="11.20" y="5.60" width="5.0" height="5.0" fill="#d85cff"/><rect x="11.90" y="6.30" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="16.80" y="5.60" width="5.0" height="5.0" fill="#d85cff"/><rect x="17.50" y="6.30" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="0.00" y="11.20" width="5.0" height="5.0" fill="#54df65"/><rect x="0.70" y="11.90" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="5.60" y="11.20" width="5.0" height="5.0" fill="#54df65"/><rect x="6.30" y="11.90" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="11.20" y="11.20" width="5.0" height="5.0" fill="#54df65"/><rect x="11.90" y="11.90" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="16.80" y="11.20" width="5.0" height="5.0" fill="#54df65"/><rect x="17.50" y="11.90" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="0.00" y="16.80" width="5.0" height="5.0" fill="#3296ff"/><rect x="0.70" y="17.50" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="5.60" y="16.80" width="5.0" height="5.0" fill="#3296ff"/><rect x="6.30" y="17.50" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="11.20" y="16.80" width="5.0" height="5.0" fill="#3296ff"/><rect x="11.90" y="17.50" width="1.2" height="1.2" fill="#fff" opacity=".9"/><rect x="16.80" y="16.80" width="5.0" height="5.0" fill="#3296ff"/><rect x="17.50" y="17.50" width="1.2" height="1.2" fill="#fff" opacity=".9"/></g>
+      <g transform="rotate(-9 10.8 10.8)">
+        <rect x="3" y="6" width="15.6" height="10.2" fill="#c9ff3f" stroke="#0a0f0c" stroke-width="1.5"/>
+        <path d="M6.2 11.2 9.5 14.4 15.6 8" fill="none" stroke="#0a0f0c" stroke-width="2.7" stroke-linecap="square" stroke-linejoin="miter"/>
+      </g>
+      <g fill="#ffe94a" stroke="#0a0f0c" stroke-width="1" shape-rendering="crispEdges">
+        <path d="M19.4-1.2h2v2h2v2h-2v2h-2v-2h-2v-2h2z"/>
+        <path d="M1.2 17h1.8v1.8h1.8v1.8H3v1.8H1.2v-1.8h-1.8v-1.8h1.8z"/>
+      </g>
+    </symbol>
+    <symbol id="logoWord" viewBox="-0.6 -0.6 37.2 9">
+      <g shape-rendering="crispEdges">
+        <path d="M0 0h4v1h-4zM0 1h1v1h-1zM4 1h1v1h-1zM0 2h1v1h-1zM4 2h1v1h-1zM0 3h1v1h-1zM4 3h1v1h-1zM0 4h1v1h-1zM4 4h1v1h-1zM0 5h1v1h-1zM4 5h1v1h-1zM0 6h4v1h-4zM6 0h5v1h-5zM6 1h1v1h-1zM6 2h1v1h-1zM6 3h4v1h-4zM6 4h1v1h-1zM6 5h1v1h-1zM6 6h5v1h-5zM12 0h5v1h-5zM12 1h1v1h-1zM12 2h1v1h-1zM12 3h4v1h-4zM12 4h1v1h-1zM12 5h1v1h-1zM12 6h1v1h-1zM18 0h4v1h-4zM18 1h1v1h-1zM22 1h1v1h-1zM18 2h1v1h-1zM22 2h1v1h-1zM18 3h4v1h-4zM18 4h1v1h-1zM21 4h1v1h-1zM18 5h1v1h-1zM22 5h1v1h-1zM18 6h1v1h-1zM22 6h1v1h-1zM25 0h3v1h-3zM24 1h1v1h-1zM28 1h1v1h-1zM24 2h1v1h-1zM28 2h1v1h-1zM24 3h5v1h-5zM24 4h1v1h-1zM28 4h1v1h-1zM24 5h1v1h-1zM28 5h1v1h-1zM24 6h1v1h-1zM28 6h1v1h-1zM31 0h4v1h-4zM30 1h1v1h-1zM30 2h1v1h-1zM30 3h1v1h-1zM32 3h3v1h-3zM30 4h1v1h-1zM34 4h1v1h-1zM30 5h1v1h-1zM34 5h1v1h-1zM31 6h4v1h-4z" fill="#4e7a0c" transform="translate(1.1 1.1)"/>
+        <path d="M0 0h4v1h-4zM0 1h1v1h-1zM4 1h1v1h-1zM0 2h1v1h-1zM4 2h1v1h-1zM0 3h1v1h-1zM4 3h1v1h-1zM0 4h1v1h-1zM4 4h1v1h-1zM0 5h1v1h-1zM4 5h1v1h-1zM0 6h4v1h-4zM6 0h5v1h-5zM6 1h1v1h-1zM6 2h1v1h-1zM6 3h4v1h-4zM6 4h1v1h-1zM6 5h1v1h-1zM6 6h5v1h-5zM12 0h5v1h-5zM12 1h1v1h-1zM12 2h1v1h-1zM12 3h4v1h-4zM12 4h1v1h-1zM12 5h1v1h-1zM12 6h1v1h-1zM18 0h4v1h-4zM18 1h1v1h-1zM22 1h1v1h-1zM18 2h1v1h-1zM22 2h1v1h-1zM18 3h4v1h-4zM18 4h1v1h-1zM21 4h1v1h-1zM18 5h1v1h-1zM22 5h1v1h-1zM18 6h1v1h-1zM22 6h1v1h-1zM25 0h3v1h-3zM24 1h1v1h-1zM28 1h1v1h-1zM24 2h1v1h-1zM28 2h1v1h-1zM24 3h5v1h-5zM24 4h1v1h-1zM28 4h1v1h-1zM24 5h1v1h-1zM28 5h1v1h-1zM24 6h1v1h-1zM28 6h1v1h-1zM31 0h4v1h-4zM30 1h1v1h-1zM30 2h1v1h-1zM30 3h1v1h-1zM32 3h3v1h-3zM30 4h1v1h-1zM34 4h1v1h-1zM30 5h1v1h-1zM34 5h1v1h-1zM31 6h4v1h-4z" fill="#c9ff3f"/>
+      </g>
+    </symbol>
+    </defs></svg>
+
     <div class="ambient ambient--one" aria-hidden="true"></div>
     <div class="ambient ambient--two" aria-hidden="true"></div>
 
     <main class="app-shell">
       <header class="topbar">
-        <a class="brand" href="#" aria-label="BLOCKSHIFT ホーム">
-          <span class="brand__mark" aria-hidden="true">
-            <i></i><i></i><i></i><i></i>
+        <h1 class="brand">
+          <svg class="brand__mark" aria-hidden="true"><use href="#logoMark"/></svg>
+          <svg class="brand__name" role="img" aria-label="DEFRAG"><use href="#logoWord"/></svg>
+        </h1>
+
+        <div class="hud" aria-live="off">
+          <span class="hud-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 10.6-4.3 2.5-1-1.7 3.3-1.9V6h2v6.6Z"/></svg>
+            <b id="hudTime">00:00</b>
           </span>
-          <span>BLOCK<span>SHIFT</span></span>
-        </a>
-        <div class="topbar__meta">
-          <button class="icon-button" id="soundToggle" type="button" aria-label="サウンドをオンにする" aria-pressed="false">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12.5 3a5.4 5.4 0 0 0-1.8-4v8a5.4 5.4 0 0 0 1.8-4Z"/></svg>
+          <span class="hud-item hud-item--score">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.9 6.2 6.6.8-4.9 4.6 1.3 6.6L12 17l-5.9 3.2 1.3-6.6L2.5 9l6.6-.8L12 2Z"/></svg>
+            <b id="hudScore">0</b>
+            <i class="hud-gain" id="hudGain" aria-hidden="true"></i>
+          </span>
+        </div>
+
+        <div class="deck-bar">
+          <button class="deck-icon deck-icon--primary" id="modeToggle" type="button" data-current-mode="manual" data-i18n-aria="aria.modeManual" aria-label="Manual mode. Switch to auto." aria-pressed="false">
+            <svg class="mode-icon mode-icon--play" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 4.2v15.6L19.5 12 7 4.2Z" />
+            </svg>
+            <svg class="mode-icon mode-icon--pause" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 4h4.2v16H6V4Zm7.8 0H18v16h-4.2V4Z" />
+            </svg>
           </button>
+          <button class="deck-icon" id="menuToggle" type="button" data-i18n-aria="aria.menu" aria-label="Settings" aria-expanded="false" aria-controls="deckMenu">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5h18v2.4H3V5.5Zm0 5.3h18v2.4H3v-2.4Zm0 5.3h18v2.4H3v-2.4Z"/></svg>
+          </button>
+        </div>
+
+        <div class="deck-menu" id="deckMenu" hidden>
+          <div class="menu-row">
+            <span data-i18n="deck.rate">SPEED</span>
+            <div class="seg">
+              <button type="button" data-speed="0.5">0.5×</button>
+              <button type="button" data-speed="1" class="is-active">1×</button>
+              <button type="button" data-speed="4">4×</button>
+            </div>
+          </div>
+          <div class="menu-row">
+            <span data-i18n="deck.size">CELL SIZE</span>
+            <div class="seg">
+              <button type="button" data-size="1" data-i18n="size.1">SMALL</button>
+              <button type="button" data-size="2" data-i18n="size.2">MEDIUM</button>
+              <button type="button" data-size="3" class="is-active" data-i18n="size.3">LARGE</button>
+            </div>
+          </div>
+          <div class="menu-row">
+            <span data-i18n="deck.sound">SOUND</span>
+            <div class="seg">
+              <button class="seg-icon" id="soundToggle" type="button" data-i18n-aria="aria.soundOn" aria-label="Sound effects on" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4.2L14 19.5v-15L8.2 9H4Zm13.2 3a4.6 4.6 0 0 0-1.7-3.6v7.2a4.6 4.6 0 0 0 1.7-3.6Zm2.8 0a7.4 7.4 0 0 0-2.9-5.9l-1 1.4A5.7 5.7 0 0 1 18.3 12a5.7 5.7 0 0 1-2.2 4.5l1 1.4A7.4 7.4 0 0 0 20 12Z"/></svg>
+              </button>
+              <button class="seg-icon" id="musicToggle" type="button" data-i18n-aria="aria.musicOn" aria-label="Music on" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 2 8 4.6v10.8a3.6 3.6 0 1 0 2.2 3.3V8.3l7.6-1.6v6.1a3.6 3.6 0 1 0 2.2 3.3V2Z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="menu-row">
+            <span data-i18n="deck.lang">LANGUAGE</span>
+            <div class="seg">
+              <button type="button" data-lang="en">EN</button>
+              <button type="button" data-lang="ja">日本語</button>
+            </div>
+          </div>
+          <div class="menu-actions">
+            <button type="button" id="helpToggle" data-i18n-aria="aria.help" aria-label="How to play">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.6A10.4 10.4 0 1 0 22.4 12 10.4 10.4 0 0 0 12 1.6Zm.1 16.8a1.4 1.4 0 1 1 0-2.8 1.4 1.4 0 0 1 0 2.8Zm2-6.6c-.9.7-1.1 1-1.1 1.8v.5h-2.2v-.8c0-1.5.6-2.3 1.7-3.1.8-.6 1.1-.9 1.1-1.6 0-.8-.6-1.3-1.5-1.3-.9 0-1.6.6-1.8 1.6l-2.1-.6c.4-1.9 1.8-3.1 4-3.1 2.2 0 3.7 1.2 3.7 3.1 0 1.3-.6 2.2-1.8 3Z"/></svg>
+              <span data-i18n="deck.help">HOW TO PLAY</span>
+            </button>
+            <button type="button" id="resetButton" data-i18n-aria="aria.reshuffle" aria-label="Reshuffle">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V2L7.5 6 12 10V7a5 5 0 1 1-5 5H4.5a7.5 7.5 0 1 0 7.5-7Z"/></svg>
+              <span data-i18n="deck.reshuffle">RESHUFFLE</span>
+            </button>
+          </div>
+          <p class="menu-credit">Made by <a href="https://x.com/jounlai" target="_blank" rel="noopener">Jounlai Cho</a></p>
         </div>
       </header>
 
-      <section class="workspace" aria-label="デフラグシミュレーター">
+      <section class="workspace" data-i18n-aria="aria.workspace" aria-label="Defrag simulator">
         <div class="disk-card panel">
           <div class="panel__header">
             <div class="drive-name">
               <span class="drive-icon" aria-hidden="true"></span>
               <div>
-                <span>CURRENT DATA FIELD</span>
-                <strong>FRAGMENT POOL <b>01</b></strong>
+                <span data-i18n="field.title">CURRENT DATA FIELD</span>
+                <strong><span data-i18n="field.pool">FRAGMENT POOL</span> <b>01</b></strong>
               </div>
             </div>
-            <div class="live-status" id="liveStatus"><i></i><span>READY TO SCAN</span></div>
+            <div class="live-status" id="liveStatus"><i></i><span>READY</span></div>
           </div>
 
           <div class="disk-stage" id="diskStage">
-            <canvas id="diskCanvas" tabindex="0" role="application" aria-label="データセル盤面。矢印キーで移動、スペースキーで選択"></canvas>
+            <canvas id="diskCanvas" tabindex="0" role="application" data-i18n-aria="aria.canvas" aria-label="Data cell field. Arrow keys move, space selects."></canvas>
             <div class="scan-line" id="scanLine" aria-hidden="true"></div>
             <div class="completion-stamp" id="completionStamp" aria-hidden="true">
-              <small>DATA FIELD</small><strong>GROUPED</strong><span>COLOR REGIONS ALIGNED</span>
-              <button type="button" id="playAgainButton" disabled>もう一度</button>
+              <small data-i18n="stamp.small">DATA FIELD</small>
+              <strong data-i18n="stamp.strong">GROUPED</strong>
+              <span data-i18n="stamp.sub">ALL COLORS ALIGNED</span>
+              <div class="stamp-stats">
+                <span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 10.6-4.3 2.5-1-1.7 3.3-1.9V6h2v6.6Z"/></svg>
+                  <b id="stampTime">00:00</b>
+                </span>
+                <span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.9 6.2 6.6.8-4.9 4.6 1.3 6.6L12 17l-5.9 3.2 1.3-6.6L2.5 9l6.6-.8L12 2Z"/></svg>
+                  <b id="stampScore">0</b>
+                </span>
+              </div>
+              <button type="button" id="playAgainButton" data-i18n="stamp.again" disabled>PLAY AGAIN</button>
             </div>
-            <div class="canvas-hint" id="canvasHint">TAP A BLOCK TO INSPECT</div>
+            <div class="canvas-hint" id="canvasHint" data-i18n="hint.tap">TAP A BLOCK</div>
           </div>
 
         </div>
 
-        <aside class="metrics panel" aria-label="ドライブ情報">
+        <aside class="metrics panel" data-i18n-aria="aria.metrics" aria-label="Field analytics">
           <div class="panel__header metrics__header">
-            <span>FIELD ANALYTICS</span>
+            <span data-i18n="metrics.header">FIELD ANALYTICS</span>
             <span id="clock">00:00:00</span>
           </div>
 
           <div class="health-ring" id="healthRing" style="--health: 34">
             <div>
               <strong id="healthValue">34</strong><small>%</small>
-              <span>ORGANIZATION</span>
+              <span data-i18n="metrics.organization">ORGANIZATION</span>
             </div>
           </div>
 
           <div class="metric-list">
             <div>
-              <span id="fragmentedLabel">LOOSE PIECES</span>
+              <span id="fragmentedLabel" data-i18n="metrics.loose">LOOSE PIECES</span>
               <strong id="fragmentedValue">--</strong>
             </div>
             <div>
-              <span>MERGE / MOVE</span>
+              <span data-i18n="metrics.moves">MERGE / MOVE</span>
               <strong id="movedValue">0</strong>
             </div>
             <div>
-              <span>ELAPSED TIME</span>
+              <span data-i18n="metrics.elapsed">ELAPSED</span>
               <strong id="elapsedValue">00:00</strong>
             </div>
           </div>
 
           <div class="capacity">
             <div class="capacity__label">
-              <span>DATA DENSITY</span><b id="densityValue">--</b>
+              <span data-i18n="metrics.density">DATA DENSITY</span><b id="densityValue">--</b>
             </div>
             <div class="capacity__bar"><i></i></div>
-            <div class="capacity__foot"><span>OCCUPIED</span><span>AVAILABLE</span></div>
+            <div class="capacity__foot">
+              <span data-i18n="metrics.occupied">OCCUPIED</span>
+              <span data-i18n="metrics.available">AVAILABLE</span>
+            </div>
           </div>
         </aside>
       </section>
 
-      <section class="control-deck panel">
+      <section class="control-deck panel" hidden>
         <div class="progress-block">
           <div class="progress-label">
             <span id="phaseLabel">AWAITING COMMAND</span>
             <strong id="progressValue">0.0%</strong>
           </div>
           <div class="progress-track"><i id="progressBar"></i></div>
-          <p id="operationText">The fragment field is ready. Begin when you are.</p>
-        </div>
-
-        <div class="controls">
-          <button class="secondary-button" id="resetButton" type="button">
-            <span aria-hidden="true">↻</span><span>RESHUFFLE</span>
-          </button>
-        </div>
-
-        <div class="deck-settings">
-          <div class="mode-control" aria-label="操作モード">
-            <span>CONTROL MODE</span>
-            <div>
-              <button type="button" id="modeToggle" class="is-active" data-current-mode="manual" aria-label="手動モード。自動モードへ切り替え" aria-pressed="false">
-                <svg class="mode-icon mode-icon--play" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8 5.5v13l10-6.5L8 5.5Z" />
-                </svg>
-                <svg class="mode-icon mode-icon--pause" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M7 5h4v14H7V5Zm6 0h4v14h-4V5Z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div class="speed-control" aria-label="シミュレーション速度">
-            <span>TRANSFER RATE</span>
-            <div>
-              <button type="button" data-speed="0.5">0.5×</button>
-              <button type="button" data-speed="1" class="is-active">1×</button>
-              <button type="button" data-speed="4">4×</button>
-            </div>
-          </div>
-          <div class="cell-size-control">
-            <input id="cellSizeControl" type="range" min="1" max="3" step="1" value="1" aria-label="セルサイズ。大きくするとマス数が減り、変更するとゲームをリセット" title="Cell size: small–large" />
-          </div>
+          <p id="operationText">The field is ready.</p>
         </div>
       </section>
 
       <footer class="footer">
-        <p><i></i> NO ACTUAL FILES ARE BEING MOVED</p>
-        <p>SIMULATION BUILD 1.0.26</p>
+        <p><i></i> <span data-i18n="footer.note">NO REAL FILES ARE MOVED</span></p>
+        <p>SIMULATION BUILD 1.3.0</p>
       </footer>
     </main>
+
+    <div class="intro-overlay" id="introOverlay" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+      <div class="intro-card" role="document">
+        <div class="intro-card__body">
+          <div class="intro-logo" aria-hidden="true">
+            <svg class="intro-logo__mark"><use href="#logoMark"/></svg>
+            <svg class="intro-logo__word"><use href="#logoWord"/></svg>
+          </div>
+          <h2 id="introTitle" data-i18n="intro.title">Merge → Fill → Sort</h2>
+          <p class="intro-origin" data-i18n="intro.origin">You once watched the old Windows defrag screen until it finished. Same energy.</p>
+
+          <ol class="intro-steps">
+            <li>
+              <!-- タップ2回でかけらが流れこみ、満タンになって弾ける、を実演する -->
+              <div class="demo demo--merge" aria-hidden="true">
+                <span class="demo-cell">
+                  <i class="demo-fill demo-fill--drain"></i>
+                  <b class="demo-tap" style="--td: 0s"></b>
+                </span>
+                <span class="demo-arrow"></span>
+                <span class="demo-cell">
+                  <i class="demo-fill demo-fill--grow"></i>
+                  <b class="demo-tap" style="--td: .6s"></b>
+                  <u class="demo-mark"></u>
+                  <s class="demo-pop"></s>
+                </span>
+              </div>
+              <strong><span class="intro-steps__n">1</span><span data-i18n="intro.s1">MERGE</span></strong>
+            </li>
+            <li>
+              <!-- 入りきらない分が となりのセルに余りとして残る、を実演する -->
+              <div class="demo demo--spill" aria-hidden="true">
+                <span class="demo-cell">
+                  <i class="demo-fill demo-fill--drain2"></i>
+                </span>
+                <span class="demo-arrow"></span>
+                <span class="demo-cell">
+                  <i class="demo-fill demo-fill--grow2"></i>
+                  <u class="demo-mark"></u>
+                  <s class="demo-pop"></s>
+                </span>
+                <span class="demo-cell demo-cell--rest">
+                  <i class="demo-fill demo-fill--rest"></i>
+                </span>
+              </div>
+              <strong><span class="intro-steps__n">2</span><span data-i18n="intro.s2">LEFTOVER</span></strong>
+            </li>
+            <li>
+              <!-- ばらけた色 → 横の帯。しま模様のレイヤーが消えて下の単色が出る -->
+              <div class="demo demo--sort" aria-hidden="true">
+                <span class="demo-bar" style="--c: #3296ff; --d: 0s; --g: linear-gradient(90deg,#54df65 0 17%,#ff9738 0 33%,#3296ff 0 50%,#d85cff 0 67%,#54df65 0 83%,#ff9738 0 100%)"></span>
+                <span class="demo-bar" style="--c: #54df65; --d: .12s; --g: linear-gradient(90deg,#d85cff 0 17%,#3296ff 0 33%,#ff9738 0 50%,#54df65 0 67%,#d85cff 0 83%,#3296ff 0 100%)"></span>
+                <span class="demo-bar" style="--c: #d85cff; --d: .24s; --g: linear-gradient(90deg,#ff9738 0 17%,#54df65 0 33%,#d85cff 0 50%,#3296ff 0 67%,#ff9738 0 83%,#54df65 0 100%)"></span>
+                <span class="demo-bar" style="--c: #ff9738; --d: .36s; --g: linear-gradient(90deg,#3296ff 0 17%,#d85cff 0 33%,#54df65 0 50%,#ff9738 0 67%,#3296ff 0 83%,#d85cff 0 100%)"></span>
+              </div>
+              <strong><span class="intro-steps__n">3</span><span data-i18n="intro.s3">SORT</span></strong>
+            </li>
+          </ol>
+
+          <ul class="intro-tips">
+            <li>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.2v15.6L19.5 12 7 4.2Z"/></svg>
+              <span data-i18n="intro.tip.auto">AUTO</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V2L7.5 6 12 10V7a5 5 0 1 1-5 5H4.5a7.5 7.5 0 1 0 7.5-7Z"/></svg>
+              <span data-i18n="intro.tip.reset">RESHUFFLE</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 7.5 7.5h9L12 2Zm0 20 4.5-5.5h-9L12 22Z"/></svg>
+              <span data-i18n="intro.tip.keys">ARROW KEYS</span>
+            </li>
+          </ul>
+
+          <p class="intro-credit">Made by <a href="https://x.com/jounlai" target="_blank" rel="noopener">Jounlai Cho</a></p>
+        </div>
+
+        <div class="intro-card__foot">
+          <button type="button" id="introStart" data-i18n="intro.start">START</button>
+          <button type="button" id="introAudio" class="intro-icon" data-i18n-aria="aria.soundOn" aria-label="Sound effects on" aria-pressed="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4.2L14 19.5v-15L8.2 9H4Zm13.2 3a4.6 4.6 0 0 0-1.7-3.6v7.2a4.6 4.6 0 0 0 1.7-3.6Zm2.8 0a7.4 7.4 0 0 0-2.9-5.9l-1 1.4A5.7 5.7 0 0 1 18.3 12a5.7 5.7 0 0 1-2.2 4.5l1 1.4A7.4 7.4 0 0 0 20 12Z"/></svg>
+          </button>
+          <div class="lang-switch" role="group" data-i18n-aria="aria.lang" aria-label="Language">
+            <button type="button" data-lang="en">EN</button>
+            <button type="button" data-lang="ja">日本語</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="inspect-toast" id="inspectToast" role="status" aria-live="polite"></div>
     <script src="app.js"></script>

@@ -239,9 +239,14 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
 .brand { flex:0 0 auto; display:flex; align-items:center; gap:8px; margin:0; }
 .brand__mark { width:26px; height:26px; flex:0 0 auto; }
 .brand__name { height:15px; width:calc(15px * 37.2 / 9); flex:0 0 auto; }
-/* logo.png を置いたら、その画像がそのまま使われる（無ければ上の SVG のまま） */
-.brand__logo { height:32px; width:auto; flex:0 0 auto; image-rendering:pixelated; }
-.intro-logo__img { height:62px; width:auto; image-rendering:pixelated; }
+/* logo.png を置いたら、その画像がそのまま使われる（無ければ上の SVG のまま）。
+   元絵は白地に黒フチなので、暗い画面ではフチが沈む。明るい座布団を敷いて拾う */
+.brand__logo, .intro-logo__img {
+  display:block; width:auto; image-rendering:pixelated;
+  background:#f2f6ee; box-shadow:0 0 0 1px rgba(201,255,63,.28), 0 6px 20px rgba(0,0,0,.4);
+}
+.brand__logo { height:26px; flex:0 0 auto; padding:3px 6px; }
+.intro-logo__img { height:52px; padding:6px 12px; }
 .brand__logo[hidden], .intro-logo__img[hidden] { display:none; }
 
 .intro-logo { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:2px; }
@@ -334,8 +339,8 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
   .inspect-toast { bottom:max(8px, env(safe-area-inset-bottom)); }
   .topbar { gap:8px; min-height:40px; margin-bottom:6px; }
   .brand__mark { width:23px; height:23px; }
-  .brand__logo { height:28px; }
-  .intro-logo__img { height:50px; }
+  .brand__logo { height:22px; padding:3px 5px; }
+  .intro-logo__img { height:42px; padding:5px 10px; }
   .brand__name { height:12px; width:calc(12px * 37.2 / 9); }
   .intro-logo__mark { width:38px; height:38px; }
   .intro-logo__word { height:21px; width:calc(21px * 37.2 / 9); }

@@ -233,20 +233,24 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
 
 .topbar {
   position:relative; z-index:15; display:flex; align-items:center; gap:12px;
-  min-height:44px; margin-bottom:8px;
+  min-height:46px; margin-bottom:8px;
 }
 .logo-sprite { position:absolute; width:0; height:0; overflow:hidden; }
 .brand { flex:0 0 auto; display:flex; align-items:center; gap:8px; margin:0; }
 .brand__mark { width:26px; height:26px; flex:0 0 auto; }
 .brand__name { height:15px; width:calc(15px * 37.2 / 9); flex:0 0 auto; }
 /* logo.png を置いたら、その画像がそのまま使われる（無ければ上の SVG のまま）。
-   元絵は白地に黒フチなので、暗い画面ではフチが沈む。明るい座布団を敷いて拾う */
+   元絵は白地に黒フチなので、暗い画面ではフチが沈む。座布団は敷かず、
+   絵の輪郭にだけ明るいフチを回して黒を拾う */
 .brand__logo, .intro-logo__img {
   display:block; width:auto; image-rendering:pixelated;
-  background:#f2f6ee; box-shadow:0 0 0 1px rgba(201,255,63,.28), 0 6px 20px rgba(0,0,0,.4);
+  filter:
+    drop-shadow(1px 0 0 #eef5ea) drop-shadow(-1px 0 0 #eef5ea)
+    drop-shadow(0 1px 0 #eef5ea) drop-shadow(0 -1px 0 #eef5ea)
+    drop-shadow(0 3px 10px rgba(0,0,0,.55));
 }
-.brand__logo { height:26px; flex:0 0 auto; padding:3px 6px; }
-.intro-logo__img { height:52px; padding:6px 12px; }
+.brand__logo { height:38px; flex:0 0 auto; }
+.intro-logo__img { height:84px; }
 .brand__logo[hidden], .intro-logo__img[hidden] { display:none; }
 
 .intro-logo { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:2px; }
@@ -332,6 +336,9 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
 .intro-credit { margin:2px 0 0; text-align:center; color:#5f6d67; font:10px var(--mono); letter-spacing:.05em; }
 .intro-credit a { color:#8b9992; text-decoration:none; border-bottom:1px solid rgba(139,153,146,.35); }
 .intro-credit a:hover { color:var(--acid); border-bottom-color:var(--acid); }
+.credit-x { display:inline-flex; align-items:center; gap:4px; margin-left:9px; border-bottom:0 !important; }
+.credit-x svg { width:9px; height:9px; fill:currentColor; }
+.menu-credit .credit-x, .intro-credit .credit-x { border-bottom:1px solid rgba(139,153,146,.35) !important; }
 
 @media (max-width: 560px) {
   .app-shell { padding-bottom:0; }
@@ -339,8 +346,8 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
   .inspect-toast { bottom:max(8px, env(safe-area-inset-bottom)); }
   .topbar { gap:8px; min-height:40px; margin-bottom:6px; }
   .brand__mark { width:23px; height:23px; }
-  .brand__logo { height:22px; padding:3px 5px; }
-  .intro-logo__img { height:42px; padding:5px 10px; }
+  .brand__logo { height:32px; }
+  .intro-logo__img { height:66px; }
   .brand__name { height:12px; width:calc(12px * 37.2 / 9); }
   .intro-logo__mark { width:38px; height:38px; }
   .intro-logo__word { height:21px; width:calc(21px * 37.2 / 9); }

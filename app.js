@@ -414,7 +414,10 @@
         while (fileVolume > EPSILON) {
           const proposedSize = Math.round((0.58 + Math.random() * 0.37) * 20) / 20;
           let size = Math.min(fileVolume, proposedSize);
-          if (fileVolume - size < 0.15) size = fileVolume;
+          // 端数が細かくなりすぎるときは残りをまとめて取る。
+          // ただし1マスに入る量まで。超えると満杯のまま余分を抱えたマスができ、
+          // その分だけ別のマスが永久に埋まらなくなる
+          if (fileVolume - size < 0.15) size = Math.min(1, fileVolume);
           fragments.push({
             kind: "data",
             fill: size,

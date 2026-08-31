@@ -159,7 +159,7 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
 .footer p:first-child { display:flex; align-items:center; gap:7px; }
 .footer i { width:5px; height:5px; background:var(--mint); border-radius:50%; }
 
-.inspect-toast { position:fixed; z-index:60; left:50%; bottom:max(20px, env(safe-area-inset-bottom)); transform:translate(-50%, 20px); max-width:calc(100% - 32px); padding:10px 14px; color:#d8e5de; background:#161c1a; border:1px solid var(--line-bright); font:9px var(--mono); letter-spacing:.04em; opacity:0; pointer-events:none; transition:.2s ease; box-shadow:0 12px 40px rgba(0,0,0,.4); }
+.inspect-toast { position:fixed; z-index:60; left:50%; bottom:max(9px, env(safe-area-inset-bottom)); transform:translate(-50%, 20px); max-width:calc(100% - 32px); padding:10px 14px; color:#d8e5de; background:#161c1a; border:1px solid var(--line-bright); font:9px var(--mono); letter-spacing:.04em; opacity:0; pointer-events:none; transition:.2s ease; box-shadow:0 12px 40px rgba(0,0,0,.4); }
 .inspect-toast.is-visible { opacity:1; transform:translate(-50%, 0); }
 .inspect-toast.is-error { color:#ffd7d2; border-color:rgba(255,95,87,.72); background:#211614; }
 
@@ -244,21 +244,10 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
 .intro-logo__mark { width:46px; height:46px; }
 .intro-logo__word { height:26px; width:calc(26px * 37.2 / 9); }
 
-.app-shell { padding-top:8px; }
+.app-shell { padding-top:8px; padding-bottom:0; }
 .workspace { display:block; margin-top:0; }
 .disk-card { background:transparent; border:0; box-shadow:none; backdrop-filter:none; }
-.disk-stage { margin:0; width:100%; height:min(78svh, 760px); border-color:rgba(208,243,226,.14); }
-.control-deck {
-  display:flex;
-  flex-direction:row;
-  flex-wrap:wrap;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  min-height:48px;
-  padding:7px 8px;
-  margin-top:8px;
-}
+.disk-stage { margin:0; width:100%; height:clamp(280px, calc(100svh - var(--deck-h, 60px) - 46px), 900px); border-color:rgba(208,243,226,.14); }
 /* すぐ要る操作だけ画面に出し、設定はメニューへ畳む */
 .deck-bar { flex:0 0 auto; display:flex; align-items:center; gap:6px; }
 
@@ -335,17 +324,10 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
 .intro-credit a { color:#8b9992; text-decoration:none; border-bottom:1px solid rgba(139,153,146,.35); }
 .intro-credit a:hover { color:var(--acid); border-bottom-color:var(--acid); }
 
-@media (min-width: 561px) {
-  .control-deck {
-    justify-content:center;
-  }
-}
-
 @media (max-width: 560px) {
   .app-shell { padding-bottom:0; }
-  /* ヘッダーの実測の高さ（--deck-h）を引いて、盤面を画面いっぱいに */
-  .disk-stage { width:100%; height:clamp(300px, calc(100svh - var(--deck-h, 60px) - 14px), 760px); min-height:0; max-height:none; margin:0; }
-  .inspect-toast { bottom:max(14px, env(safe-area-inset-bottom)); }
+  .disk-stage { min-height:0; max-height:none; }
+  .inspect-toast { bottom:max(8px, env(safe-area-inset-bottom)); }
   .topbar { gap:8px; min-height:40px; margin-bottom:6px; }
   .brand__mark { width:23px; height:23px; }
   .brand__name { height:12px; width:calc(12px * 37.2 / 9); }

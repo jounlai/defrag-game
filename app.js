@@ -69,7 +69,7 @@
       "field.title": "CURRENT DATA FIELD",
       "field.pool": "FRAGMENT POOL",
       "stamp.small": "DATA FIELD",
-      "stamp.strong": "GROUPED",
+      "stamp.strong": "DEFRAGGED",
       "stamp.sub": "ALL COLORS ALIGNED",
       "stamp.again": "PLAY AGAIN",
       "hint.tap": "TAP A BLOCK",
@@ -168,7 +168,7 @@
       "field.title": "現在のデータ領域",
       "field.pool": "フラグメント",
       "stamp.small": "データ領域",
-      "stamp.strong": "整列完了",
+      "stamp.strong": "デフラグ完了",
       "stamp.sub": "4色そろいました",
       "stamp.again": "もう一度",
       "hint.tap": "タップで確認",
@@ -2722,6 +2722,26 @@
   applySpeed(settings.speed);
   applyCellScale(settings.cellScale);
   introAudio.setAttribute("aria-pressed", String(settings.sound || settings.music));
+  /* ロゴ画像を置いたら、そちらをそのまま使う。
+     logo.png … ヘッダーと起動画面のロゴ（無ければ組みこみの SVG のまま）
+     用意が無いときに読みこみを試すのは1回だけにしておく */
+  const LOGO_FILE = "logo.png";
+
+  (function useLogoFile() {
+    const images = [...document.querySelectorAll(".brand__logo, .intro-logo__img")];
+    if (!images.length) return;
+    const probe = new Image();
+    probe.onload = () => {
+      images.forEach((image) => {
+        image.src = LOGO_FILE;
+        image.hidden = false;
+      });
+      document.querySelectorAll(".brand__mark, .brand__name, .intro-logo__mark, .intro-logo__word")
+        .forEach((node) => { node.style.display = "none"; });
+    };
+    probe.src = LOGO_FILE;
+  })();
+
   applyLanguage(detectLanguage());
   configureGrid();
   createField();

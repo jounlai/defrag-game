@@ -239,6 +239,10 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
 .brand { flex:0 0 auto; display:flex; align-items:center; gap:8px; margin:0; }
 .brand__mark { width:26px; height:26px; flex:0 0 auto; }
 .brand__name { height:15px; width:calc(15px * 37.2 / 9); flex:0 0 auto; }
+/* logo.png を置いたら、その画像がそのまま使われる（無ければ上の SVG のまま） */
+.brand__logo { height:32px; width:auto; flex:0 0 auto; image-rendering:pixelated; }
+.intro-logo__img { height:62px; width:auto; image-rendering:pixelated; }
+.brand__logo[hidden], .intro-logo__img[hidden] { display:none; }
 
 .intro-logo { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:2px; }
 .intro-logo__mark { width:46px; height:46px; }
@@ -330,6 +334,8 @@ h1 em { color: var(--acid); font-style: normal; font-weight: 600; }
   .inspect-toast { bottom:max(8px, env(safe-area-inset-bottom)); }
   .topbar { gap:8px; min-height:40px; margin-bottom:6px; }
   .brand__mark { width:23px; height:23px; }
+  .brand__logo { height:28px; }
+  .intro-logo__img { height:50px; }
   .brand__name { height:12px; width:calc(12px * 37.2 / 9); }
   .intro-logo__mark { width:38px; height:38px; }
   .intro-logo__word { height:21px; width:calc(21px * 37.2 / 9); }

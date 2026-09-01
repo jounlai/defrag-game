@@ -1712,11 +1712,11 @@
     const height = cell.height + grow * 2;
     const fillHeight = Math.max(1, height * item.fill);
     const color = DATA_SHADES[item.colorId ?? item.shade ?? 0];
-    ctx.globalAlpha = partial ? .13 : .18;
+    ctx.globalAlpha = partial ? .1 : .2;
     ctx.fillStyle = color;
     ctx.fillRect(x, y, width, height);
     ctx.fillStyle = color;
-    ctx.globalAlpha = partial ? .76 : .92;
+    ctx.globalAlpha = partial ? .68 : 1;
     ctx.fillRect(x, y + height - fillHeight, width, fillHeight);
 
     if (partial && item.segments.length > 1 && height > 5) {
@@ -1732,11 +1732,23 @@
         ctx.stroke();
       });
     }
+    // 満杯のマスは、ロゴのブロックと同じように面取りして「積んだ」見た目にする。
+    // 半端なマスは平らなままなので、遠目でもどちらか一目でわかる
     if (item.fill >= 1 - EPSILON) {
-      const markSize = Math.max(1.5, Math.min(3, width * .24));
-      ctx.globalAlpha = .95;
-      ctx.fillStyle = "#eaffb2";
-      ctx.fillRect(x + 1, y + 1, markSize, markSize);
+      const bevel = Math.max(1, Math.min(3, width * .1));
+      ctx.globalAlpha = .55;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x, y, width, bevel);
+      ctx.fillRect(x, y, bevel, height);
+      ctx.globalAlpha = .34;
+      ctx.fillStyle = "#04070a";
+      ctx.fillRect(x, y + height - bevel, width, bevel);
+      ctx.fillRect(x + width - bevel, y, bevel, height);
+
+      const markSize = Math.max(2, Math.min(4.5, width * .18));
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x + bevel + 1, y + bevel + 1, markSize, markSize);
     }
     ctx.globalAlpha = 1;
   }

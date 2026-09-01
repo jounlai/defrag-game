@@ -309,8 +309,8 @@
 
   const DESKTOP_COLS = 48;
   const DESKTOP_ROWS = 20;
-  const MOBILE_COLS = 24;
   const MOBILE_ROWS = 40;
+  const MAX_CELL_SIDE = 92;
   const BASE_DENSITY = 520 / (DESKTOP_COLS * DESKTOP_ROWS);
   const COLOR_COUNT = 4;
   let COLS = DESKTOP_COLS;
@@ -364,15 +364,31 @@
   let renderCols = COLS;
   let renderRows = ROWS;
 
-  function configureGrid() {
-    const compact = stage.clientWidth <= 560;
-    const baseCols = compact ? MOBILE_COLS : DESKTOP_COLS;
-    const baseRows = compact ? MOBILE_ROWS : DESKTOP_ROWS;
-    const nextCols = Math.max(4, Math.ceil(baseCols / cellScale));
-    const nextRows = Math.max(4, Math.ceil(baseRows / cellScale));
+  // マスは常に正方形にして、盤面の縦横比のぶんは「マスの数」で吸収する。
+  // 行数・列数を固定していると画面比のしわ寄せがマスの形に出てしまうので、
+  // 先に一辺の長さを決め、そこから何行・何列とれるかを数える
+  function gridMetrics() {
+    const width = Math.max(80, stage.clientWidth || 320);
+    const height = Math.max(80, stage.clientHeight || 320);
+    const compact = width <= 560;
+    const padding = compact ? 10 : 18;
+    const gap = compact ? 1.5 : 2;
+    const availWidth = Math.max(40, width - padding * 2);
+    const availHeight = Math.max(40, height - padding * 2);
 
-    COLS = nextCols;
-    ROWS = nextRows;
+    // 倍率は「一辺の目安」を決める。高さから割り出して、大きくなりすぎない範囲に収める
+    const wantRows = Math.max(4, Math.round((compact ? MOBILE_ROWS : DESKTOP_ROWS) / cellScale));
+    const side = Math.max(12, Math.min(MAX_CELL_SIDE, (availHeight + gap) / wantRows - gap));
+    const rows = Math.max(4, Math.floor((availHeight + gap) / (side + gap)));
+    const cols = Math.max(4, Math.floor((availWidth + gap) / (side + gap)));
+    return { rows, cols, gap, availWidth, availHeight };
+  }
+
+  function configureGrid() {
+    const { rows, cols } = gridMetrics();
+
+    COLS = cols;
+    ROWS = rows;
     TOTAL = COLS * ROWS;
     const targetRows = Math.max(COLOR_COUNT, Math.min(
       ROWS,
@@ -1314,11 +1330,15 @@
     canvas.style.height = `${surfaceHeight}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const padding = viewportWidth < 550 ? 10 : 18;
-    const gap = viewportWidth < 550 ? 1.5 : 2;
+    const { gap, availWidth, availHeight } = gridMetrics();
     cell.gap = gap;
-    cell.width = (surfaceWidth - padding * 2 - gap * (renderCols - 1)) / renderCols;
-    cell.height = Math.min(cell.width * 1.28, (surfaceHeight - padding * 2 - gap * (renderRows - 1)) / renderRows);
+    // 幅と高さの両方に収まる一辺を選ぶ。縦横おなじ値にするので必ず正方形になる
+    const side = Math.min(
+      (availWidth + gap) / renderCols - gap,
+      (availHeight + gap) / renderRows - gap
+    );
+    cell.width = Math.max(1, side);
+    cell.height = cell.width;
     const gridWidth = cell.width * renderCols + gap * (renderCols - 1);
     const gridHeight = cell.height * renderRows + gap * (renderRows - 1);
     cell.ox = (surfaceWidth - gridWidth) / 2;

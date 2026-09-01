@@ -1307,18 +1307,14 @@
   function resizeCanvas() {
     const viewportWidth = stage.clientWidth;
     const viewportHeight = stage.clientHeight;
-    const previousCols = COLS;
-    const previousRows = ROWS;
-    configureGrid();
-    if (cells.length && (previousCols !== COLS || previousRows !== ROWS)) {
-      createField();
-      if (hasStarted) {
-        startedAt = performance.now();
-        lastStep = performance.now();
-        setState("running");
-        updateModeButtons();
-        focusFirstCell();
-      }
+    // 遊んでいる最中に画面の大きさが変わっても、盤面は作り直さない。
+    // マスの数はそのままに、一辺の長さだけ画面に合わせる（正方形は保つ）。
+    // 始まる前だけは、実際の大きさに合わせて組みなおしてよい
+    if (!hasStarted) {
+      const previousCols = COLS;
+      const previousRows = ROWS;
+      configureGrid();
+      if (cells.length && (previousCols !== COLS || previousRows !== ROWS)) createField();
     }
 
     const surfaceWidth = viewportWidth;
@@ -2595,6 +2591,7 @@
   function resetGame() {
     hasStarted = true;
     if (musicEnabled) startMusic();
+    configureGrid();
     createField();
     hudTime.textContent = "00:00";
     startedAt = performance.now();
@@ -2726,7 +2723,6 @@
       if (nextCellScale === cellScale) return;
       if (!window.confirm(t("confirm.cellSize"))) return;
       applyCellScale(nextCellScale);
-      configureGrid();
       resetGame();
       resizeCanvas();
       showToast(t("toast.cellSize", { size: t(`size.${cellScale}`), total: TOTAL }));

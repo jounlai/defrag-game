@@ -625,9 +625,12 @@
     const adjacentSpace = adjacent.find((index) => {
       if (index === sourceIndex) return false;
       if (isProtected(index)) return false;
-      return !cells[index] || (
-        cells[index].colorId === remainderColor && 1 - cells[index].fill >= remainder - EPSILON
-      );
+      if (!cells[index]) return true;
+      // 手動のときは空いているマスにしか置かない。中身のあるマスへ勝手に
+      // 流しこむと、こちらが選んでいない合体を打つことになる。
+      // 置き場がなければ余りは元のマスに残す
+      if (controlMode === "manual") return false;
+      return cells[index].colorId === remainderColor && 1 - cells[index].fill >= remainder - EPSILON;
     });
     if (adjacentSpace !== undefined) return adjacentSpace;
     if (controlMode === "manual") return sourceIndex;

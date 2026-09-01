@@ -358,6 +358,7 @@
   let hasStarted = false;
   let introMode = "start";
   let toastTimer = null;
+  let gridReady = false;
   let stallSteps = 0;
   let stallMark = -1;
   let cell = { width: 0, height: 0, gap: 0, ox: 0, oy: 0 };
@@ -1307,14 +1308,15 @@
   function resizeCanvas() {
     const viewportWidth = stage.clientWidth;
     const viewportHeight = stage.clientHeight;
-    // 遊んでいる最中に画面の大きさが変わっても、盤面は作り直さない。
-    // マスの数はそのままに、一辺の長さだけ画面に合わせる（正方形は保つ）。
-    // 始まる前だけは、実際の大きさに合わせて組みなおしてよい
-    if (!hasStarted) {
+    // 格子を決めるのは、画面の大きさが最初に分かった一度きり。
+    // あとは幅や高さが変わっても盤面はそのままで、マスの一辺だけ合わせる
+    // （正方形は保つ）。作りなおすときは configureGrid をあらためて呼ぶ
+    if (!gridReady && viewportWidth > 80 && viewportHeight > 80) {
       const previousCols = COLS;
       const previousRows = ROWS;
       configureGrid();
       if (cells.length && (previousCols !== COLS || previousRows !== ROWS)) createField();
+      gridReady = true;
     }
 
     const surfaceWidth = viewportWidth;

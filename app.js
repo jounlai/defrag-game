@@ -28,6 +28,7 @@
   const modeToggle = document.querySelector("#modeToggle");
   const sizeButtons = [...document.querySelectorAll("[data-size]")];
   const menuToggle = document.querySelector("#menuToggle");
+  const autoBadge = document.querySelector("#autoBadge");
   const hudTime = document.querySelector("#hudTime");
   const hudScore = document.querySelector("#hudScore");
   const hudGain = document.querySelector("#hudGain");
@@ -89,6 +90,7 @@
       "deck.sound": "SOUND",
       "deck.lang": "LANGUAGE",
       "deck.help": "HOW TO PLAY",
+      "hud.auto": "AUTO",
       "aria.menu": "Settings",
       "footer.note": "NO REAL FILES ARE MOVED",
       "intro.title": "MERGE → FILL → SORT",
@@ -188,6 +190,7 @@
       "deck.sound": "サウンド",
       "deck.lang": "言語",
       "deck.help": "遊び方",
+      "hud.auto": "オート",
       "aria.menu": "設定",
       "footer.note": "実際のファイルは動きません",
       "intro.title": "寄せる → 満たす → そろえる",
@@ -1190,6 +1193,7 @@
     modeToggle.classList.toggle("is-active", !isAuto);
     modeToggle.setAttribute("aria-pressed", String(isAuto));
     modeToggle.setAttribute("aria-label", t(isAuto ? "aria.modeAuto" : "aria.modeManual"));
+    autoBadge.hidden = !isAuto;
   }
 
   /* 得点。続けて決めるほど倍率が上がり、2.4秒あくと元に戻る */
@@ -2587,11 +2591,29 @@
   });
 
   // バックグラウンドから戻ると suspended のままなので鳴らし直せるようにする
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState !== "visible") return;
-    if (audioContext && audioContext.state === "suspended") audioContext.resume().catch(() => {});
+  /* ホーム画面に戻ったり画面がロックされたら、音は止める。
+     消音スイッチを無視するために playback 扱いにしてあるぶん、
+     何もしないと裏で鳴りつづけてしまう */
+  function suspendAudio() {
+    if (silentLoop && !silentLoop.paused) silentLoop.pause();
+    if (audioContext && audioContext.state === "running") audioContext.suspend().catch(() => {});
+  }
+
+  function resumeAudio() {
     syncSilentLoop();
+    if (!audioContext || audioContext.state !== "suspended") return;
+    audioContext.resume().then(() => {
+      // 止まっていたあいだの予約が一気に鳴らないよう、いまから数えなおす
+      musicNextTime = audioContext.currentTime + 0.12;
+      musicStep = 0;
+    }).catch(() => {});
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") resumeAudio();
+    else suspendAudio();
   });
+  window.addEventListener("pagehide", suspendAudio);
 
   function resetGame() {
     hasStarted = true;

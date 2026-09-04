@@ -1187,12 +1187,27 @@
     updateModeButtons();
   }
 
+  // 一文字ずつ遅らせて跳ねさせたいので、文字を個別の要素に分けて置く
+  function renderAutoBadge() {
+    const label = t("hud.auto");
+    if (autoBadge.dataset.label === label) return;
+    autoBadge.dataset.label = label;
+    autoBadge.textContent = "";
+    [...label].forEach((character, index) => {
+      const letter = document.createElement("b");
+      letter.style.setProperty("--i", index);
+      letter.textContent = character;
+      autoBadge.appendChild(letter);
+    });
+  }
+
   function updateModeButtons() {
     const isAuto = controlMode === "auto";
     modeToggle.dataset.currentMode = controlMode;
     modeToggle.classList.toggle("is-active", !isAuto);
     modeToggle.setAttribute("aria-pressed", String(isAuto));
     modeToggle.setAttribute("aria-label", t(isAuto ? "aria.modeAuto" : "aria.modeManual"));
+    renderAutoBadge();
     autoBadge.hidden = !isAuto;
   }
 
@@ -2757,6 +2772,8 @@
     settings.speed = value;
     saveSettings();
     speedButtons.forEach((item) => item.classList.toggle("is-active", Number(item.dataset.speed) === value));
+    // 転送速度そのままだと差が出すぎるので、ほどよく圧縮して印に渡す
+    document.documentElement.style.setProperty("--auto-rate", value === 0.5 ? 0.7 : (value === 4 ? 1.9 : 1));
   }
 
   function applyCellScale(value) {

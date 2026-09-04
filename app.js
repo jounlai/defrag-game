@@ -2599,6 +2599,23 @@
     if (audioContext && audioContext.state === "running") audioContext.suspend().catch(() => {});
   }
 
+  // iOS は画面に戻っただけでは resume を受けつけないことがある。
+  // そのときは次のタップまで待って、そこで鳴らしなおす
+  let waitingForGesture = false;
+
+  function armGestureResume() {
+    if (waitingForGesture) return;
+    waitingForGesture = true;
+    const onGesture = () => {
+      waitingForGesture = false;
+      ["pointerdown", "touchstart", "keydown"].forEach((type) => window.removeEventListener(type, onGesture));
+      resumeAudio();
+    };
+    ["pointerdown", "touchstart", "keydown"].forEach((type) => {
+      window.addEventListener(type, onGesture, { passive: true });
+    });
+  }
+
   function resumeAudio() {
     syncSilentLoop();
     if (!audioContext || audioContext.state !== "suspended") return;
@@ -2606,7 +2623,11 @@
       // 止まっていたあいだの予約が一気に鳴らないよう、いまから数えなおす
       musicNextTime = audioContext.currentTime + 0.12;
       musicStep = 0;
-    }).catch(() => {});
+      if (musicEnabled) startMusic();
+    }).catch(() => armGestureResume());
+    window.setTimeout(() => {
+      if (audioContext && audioContext.state === "suspended") armGestureResume();
+    }, 400);
   }
 
   document.addEventListener("visibilitychange", () => {

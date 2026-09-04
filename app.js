@@ -2682,10 +2682,17 @@
     sfxUI(true);
   }
 
+  // 起動画面のスイッチは音まわりの親。ここで入れたら、覚えている
+  // 効果音・BGM の設定もそろえる。片方が切れたままだと、押しても鳴らない
   introAudio.addEventListener("click", () => {
     const next = introAudio.getAttribute("aria-pressed") !== "true";
     introAudio.setAttribute("aria-pressed", String(next));
-    syncAudioLabels();
+    settings.sound = next;
+    settings.music = next;
+    saveSettings();
+    if (next) unlockAudio();
+    setSoundEnabled(next);      // 押した手ごたえは、その場で返す
+    sfxUI(next);
   });
   langButtons.forEach((button) => {
     button.addEventListener("click", () => {

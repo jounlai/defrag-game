@@ -190,7 +190,7 @@
       "deck.sound": "サウンド",
       "deck.lang": "言語",
       "deck.help": "遊び方",
-      "hud.auto": "オート",
+      "hud.auto": "AUTO",
       "aria.menu": "設定",
       "footer.note": "実際のファイルは動きません",
       "intro.title": "寄せる → 満たす → そろえる",
